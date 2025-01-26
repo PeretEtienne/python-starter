@@ -1,0 +1,39 @@
+services:
+  api: &main_app
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: api:${API_VERSION:-latest}
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      API_HOST: 0.0.0.0
+      API_DB_HOST: api-db
+      API_DB_PORT: 5432
+      API_DB_USER: api
+      API_DB_PASS: api
+      API_DB_BASE: api
+
+  db:
+    image: postgres:16.3-bullseye
+    hostname: api-db
+    environment:
+      POSTGRES_PASSWORD: "api"
+      POSTGRES_USER: "api"
+      POSTGRES_DB: "api"
+    volumes:
+      - api-db-data:/var/lib/postgresql/data
+    restart: always
+    healthcheck:
+      test: pg_isready -U api
+      interval: 2s
+      timeout: 3s
+      retries: 40
+
+volumes:
+  api-db-data:
+    name: api-db-data

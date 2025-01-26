@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "app"
+version = "0.1.0"
+description = ""
+authors = ["Etienne Peret <etienne.peret@integragen.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = { extras = ["standard"], version = "^0.115.7" }
+yarl = "^1.18.3"
+pydantic-settings = "^2.7.1"
+pydantic = "^2.10.6"
+sentry-sdk = "^2.20.0"
+prisma = "^0.15.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
