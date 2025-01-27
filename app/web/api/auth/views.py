@@ -36,11 +36,13 @@ async def register(
     try:
         user = await service.register(RegisterData(**payload.model_dump()))
     except UserAlreadyExists as e:
+        logger.error(str(e))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         ) from e
     except Exception as e:
+        logger.error(str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
@@ -60,12 +62,14 @@ async def login(
     payload: LoginPayloadSchema,
     service: AuthService = Depends(get_auth_service),
 ):
-    # try:
-    credentials = await service.login(payload.email, payload.password)
-    # except InvalidCredentials as e:
-    #     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
-    # except Exception as e:
-    #     raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
+    try:
+        credentials = await service.login(payload.email, payload.password)
+    except InvalidCredentials as e:
+        logger.error(str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+    except Exception as e:
+        logger.error(str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
     return credentials
 
@@ -84,8 +88,10 @@ async def refresh(
     try:
         credentials = await service.refresh(payload.refresh_token)
     except InvalidCredentials as e:
+        logger.error(str(e))
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
     except Exception as e:
+        logger.error(str(e))
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
     return credentials
