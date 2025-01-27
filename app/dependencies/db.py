@@ -3,7 +3,7 @@ from fastapi import Request
 from prisma import Prisma
 
 
-async def get_db_session(request: Request) -> AsyncGenerator[Prisma]:
+async def get_db_session(request: Request) -> AsyncGenerator[Prisma, None]:
     """
     Create and get database session.
 
