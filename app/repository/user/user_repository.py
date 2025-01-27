@@ -20,3 +20,17 @@ class UserRepository():
         return await self.db.user.find_first(where={
             "email": email,
         })
+
+    async def update_user_refresh_token(
+        self,
+        user_id: int,
+        refresh_token: str
+    ) -> User | None:
+        return await self.db.user.update(
+            where={
+                "id": user_id
+            },
+            data={
+                "refresh_token": refresh_token,
+            }
+        )

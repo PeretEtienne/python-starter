@@ -1,7 +1,7 @@
 import pytest
 from app.services.auth.auth_service import AuthService
-from app.services.auth.dto import RegisterData
-from app.services.auth.errors import UserAlreadyExists
+from app.services.auth.dto import RegisterData, Tokens
+from app.services.auth.errors import InvalidCredentials, UserAlreadyExists
 from prisma.models import User
 
 
@@ -77,3 +77,110 @@ async def test_register_user_unexpected_error(auth_service, mocker):
 
     with pytest.raises(Exception):
         await auth_service.register(register_data)
+
+
+@pytest.mark.asyncio
+async def test_login_success(auth_service, mocker):
+    email = "test@example.com"
+    password = "correct_password"
+    hashed_password = "hashed_password"
+
+    mocker.patch("app.services.auth.auth_service.verify_password", return_value=True)
+
+    user = User(
+        id=1,
+        email=email,
+        hashed_password=hashed_password,
+        first_name="John",
+        last_name="Doe",
+        is_active=True
+    )
+    auth_service.user_repo.get_user_by_email = mocker.AsyncMock(return_value=user)
+    auth_service.user_repo.update_user_refresh_token = mocker.AsyncMock()
+
+    mocker.patch(
+        "app.services.auth.auth_service.create_access_token",
+        side_effect=lambda data, expires_delta: f"token_{data['sub']}"
+    )
+    expected_token = f"token_{user.id}"
+
+    tokens = await auth_service.login(email, password)
+
+    auth_service.user_repo.get_user_by_email.assert_awaited_once_with(email)
+    auth_service.user_repo.update_user_refresh_token.assert_awaited_once_with(user.id, expected_token)
+    assert isinstance(tokens, Tokens)
+    assert tokens.access_token == expected_token
+    assert tokens.refresh_token == expected_token
+
+
+@pytest.mark.asyncio
+async def test_login_invalid_email(auth_service, mocker):
+    email = "invalid@example.com"
+    password = "some_password"
+
+    auth_service.user_repo.get_user_by_email = mocker.AsyncMock(return_value=None)
+
+    with pytest.raises(InvalidCredentials, match="Invalid credentials"):
+        await auth_service.login(email, password)
+
+    auth_service.user_repo.get_user_by_email.assert_awaited_once_with(email)
+
+
+@pytest.mark.asyncio
+async def test_login_invalid_password(auth_service, mocker):
+    email = "test@example.com"
+    password = "wrong_password"
+    hashed_password = "hashed_password"
+
+    mocker.patch("app.services.auth.auth_service.verify_password", return_value=False)
+
+    user = User(
+        id=1,
+        email=email,
+        hashed_password=hashed_password,
+        first_name="John",
+        last_name="Doe",
+        is_active=True
+    )
+    auth_service.user_repo.get_user_by_email = mocker.AsyncMock(return_value=user)
+
+    with pytest.raises(InvalidCredentials, match="Invalid credentials"):
+        await auth_service.login(email, password)
+
+    auth_service.user_repo.get_user_by_email.assert_awaited_once_with(email)
+
+
+@pytest.mark.asyncio
+async def test_login_update_refresh_token_failed(auth_service, mocker):
+    email = "test@example.com"
+    password = "correct_password"
+    hashed_password = "hashed_password"
+
+    mocker.patch("app.services.auth.auth_service.verify_password", return_value=True)
+
+    user = User(
+        id=1,
+        email=email,
+        hashed_password=hashed_password,
+        first_name="John",
+        last_name="Doe",
+        is_active=True
+    )
+    auth_service.user_repo.get_user_by_email = mocker.AsyncMock(return_value=user)
+    auth_service.user_repo.update_user_refresh_token = mocker.AsyncMock(
+        side_effect=Exception("Database error")
+    )
+
+    mocker.patch(
+        "app.services.auth.auth_service.create_access_token",
+        side_effect=lambda data, expires_delta: f"token_{data['sub']}"
+    )
+    expected_token = f"token_{user.id}"
+
+    with pytest.raises(Exception, match="Database error"):
+        await auth_service.login(email, password)
+
+    auth_service.user_repo.get_user_by_email.assert_awaited_once_with(email)
+    auth_service.user_repo.update_user_refresh_token.assert_awaited_once_with(
+        user.id, expected_token
+    )

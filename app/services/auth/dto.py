@@ -7,3 +7,10 @@ class RegisterData():
     last_name: str
     password: str
     email: str
+
+
+@dataclass
+class Tokens():
+    access_token: str
+    refresh_token: str
+    type: str = "Bearer"

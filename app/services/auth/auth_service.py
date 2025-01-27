@@ -1,9 +1,11 @@
+from datetime import timedelta
 from prisma.models import User
 from app.repository.user.dto import CreateUserDTO
 from app.repository.user.user_repository import UserRepository
-from app.services.auth.dto import RegisterData
-from app.services.auth.errors import UserAlreadyExists
-from app.utils.security import hash_password
+from app.services.auth.dto import RegisterData, Tokens
+from app.services.auth.errors import InvalidCredentials, UserAlreadyExists
+from app.settings import settings
+from app.utils.security import create_access_token, hash_password, verify_password
 
 
 class AuthService():
@@ -22,3 +24,29 @@ class AuthService():
             last_name=data.last_name,
             hashed_password=hash_password(data.password),
         ))
+
+    async def login(self, email: str, password: str) -> Tokens:
+        user = await self.user_repo.get_user_by_email(email)
+
+        if not user:
+            print('no user')
+            raise InvalidCredentials('Invalid credentials')
+
+        if not verify_password(user.hashed_password, password):
+            raise InvalidCredentials('Invalid credentials')
+
+        access_token_expires = timedelta(
+            seconds=settings.auth_lifetime_seconds
+        )
+        access_token = create_access_token(
+            data={"sub": user.id}, expires_delta=access_token_expires
+        )
+
+        refresh_token_expires = timedelta(seconds=settings.auth_refresh_seconds)
+        refresh_token = create_access_token(
+            data={"sub": user.id}, expires_delta=refresh_token_expires
+        )
+
+        await self.user_repo.update_user_refresh_token(user.id, refresh_token)
+
+        return Tokens(access_token=access_token, refresh_token=refresh_token)
