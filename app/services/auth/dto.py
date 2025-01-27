@@ -13,4 +13,4 @@ class RegisterData():
 class Tokens():
     access_token: str
     refresh_token: str
-    type: str = "Bearer"
+    token_type: str = "bearer"

@@ -2,9 +2,9 @@ import logging
 from typing import Any
 
 from fastapi import Depends, FastAPI
-from prisma import Prisma
+from prisma.models import User
 
-from app.dependencies.db import get_db_session
+from app.dependencies.user import get_current_user
 from app.settings import settings
 from app.web.api.user.schemas import (
     UserRead,
@@ -25,12 +25,8 @@ router = app.router
     response_model=UserRead,
 )
 async def get_me(
-    db: Prisma = Depends(get_db_session),
+    user: User = Depends(get_current_user)
 ) -> Any:
     """Get current user."""
 
-    return await db.user.find_first(
-        where={
-            "id": 1
-        },
-    )
+    return user

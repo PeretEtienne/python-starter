@@ -1,6 +1,8 @@
 import logging
+from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
 from prisma import Prisma
 
 from app.dependencies.db import get_db_session
@@ -9,7 +11,7 @@ from app.services.auth.auth_service import AuthService
 from app.services.auth.dto import RegisterData
 from app.services.auth.errors import InvalidCredentials, UserAlreadyExists
 from app.settings import settings
-from app.web.api.auth.schemas import (LoginPayloadSchema, RefreshPayloadSchema, RegisterPayloadSchema, TokensSchema)
+from app.web.api.auth.schemas import (RefreshPayloadSchema, RegisterPayloadSchema, TokensSchema)
 
 logger = logging.getLogger(settings.logger_name)
 
@@ -59,11 +61,11 @@ async def register(
     response_model=TokensSchema,
 )
 async def login(
-    payload: LoginPayloadSchema,
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     service: AuthService = Depends(get_auth_service),
 ):
     try:
-        credentials = await service.login(payload.email, payload.password)
+        credentials = await service.login(form_data.username, form_data.password)
     except InvalidCredentials as e:
         logger.error(str(e))
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
