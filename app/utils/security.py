@@ -27,3 +27,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
         algorithm="HS256"
     )
     return encoded_jwt
+
+
+def decode_token(token: str):
+    return jwt.decode(token, settings.auth_secret, algorithms=["HS256"])

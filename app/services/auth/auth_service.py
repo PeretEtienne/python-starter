@@ -5,7 +5,7 @@ from app.repository.user.user_repository import UserRepository
 from app.services.auth.dto import RegisterData, Tokens
 from app.services.auth.errors import InvalidCredentials, UserAlreadyExists
 from app.settings import settings
-from app.utils.security import create_access_token, hash_password, verify_password
+from app.utils.security import create_access_token, decode_token, hash_password, verify_password
 
 
 class AuthService():
@@ -39,12 +39,44 @@ class AuthService():
             seconds=settings.auth_lifetime_seconds
         )
         access_token = create_access_token(
-            data={"sub": user.id}, expires_delta=access_token_expires
+            data={"sub": str(user.id)}, expires_delta=access_token_expires
         )
 
         refresh_token_expires = timedelta(seconds=settings.auth_refresh_seconds)
         refresh_token = create_access_token(
-            data={"sub": user.id}, expires_delta=refresh_token_expires
+            data={"sub": str(user.id)}, expires_delta=refresh_token_expires
+        )
+
+        await self.user_repo.update_user_refresh_token(user.id, refresh_token)
+
+        return Tokens(access_token=access_token, refresh_token=refresh_token)
+
+    async def refresh(self, refresh_token: str) -> Tokens:
+        try:
+            user_id_str = decode_token(refresh_token).get("sub")
+        except Exception:
+            raise InvalidCredentials("Invalid refresh token")
+
+        if not user_id_str:
+            raise InvalidCredentials("Invalid refresh token")
+
+        user_id = int(user_id_str)
+
+        user = await self.user_repo.get(user_id)
+
+        if not user or user.refresh_token != refresh_token:
+            raise InvalidCredentials("Invalid refresh token")
+
+        access_token_expires = timedelta(
+            seconds=settings.auth_lifetime_seconds
+        )
+        access_token = create_access_token(
+            data={"sub": str(user.id)}, expires_delta=access_token_expires
+        )
+
+        refresh_token_expires = timedelta(seconds=settings.auth_refresh_seconds)
+        refresh_token = create_access_token(
+            data={"sub": str(user.id)}, expires_delta=refresh_token_expires
         )
 
         await self.user_repo.update_user_refresh_token(user.id, refresh_token)

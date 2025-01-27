@@ -8,6 +8,9 @@ class UserRepository():
     def __init__(self, db: Prisma):
         self.db = db
 
+    async def get(self, user_id: int) -> User | None:
+        return await self.db.user.find_first(where={"id": user_id})
+
     async def create_user(self, data: CreateUserDTO) -> User:
         return await self.db.user.create(data={
             "email": data.email,

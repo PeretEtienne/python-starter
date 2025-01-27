@@ -22,3 +22,9 @@ class TokensSchema(BaseModel):
     access_token: str
     refresh_token: str
     type: Literal["Bearer"] = "Bearer"
+
+
+class RefreshPayloadSchema(BaseModel):
+    """Refresh payload schema."""
+
+    refresh_token: str

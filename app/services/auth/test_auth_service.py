@@ -184,3 +184,95 @@ async def test_login_update_refresh_token_failed(auth_service, mocker):
     auth_service.user_repo.update_user_refresh_token.assert_awaited_once_with(
         user.id, expected_token
     )
+
+
+@pytest.mark.asyncio
+async def test_refresh_success(auth_service, mocker):
+    user_id = 1
+    old_refresh_token = "valid_refresh_token"
+    new_access_token = "new_access_token"
+    new_refresh_token = "new_refresh_token"
+
+    mocker.patch(
+        "app.services.auth.auth_service.decode_token",
+        return_value={"sub": str(user_id)}
+    )
+
+    mocker.patch(
+        "app.services.auth.auth_service.create_access_token",
+        side_effect=[new_access_token, new_refresh_token]
+    )
+
+    user = User(
+        id=user_id,
+        email="email",
+        hashed_password="hashed_password",
+        refresh_token=old_refresh_token,
+        first_name="John",
+        last_name="Doe",
+        is_active=True
+    )
+    auth_service.user_repo.get = mocker.AsyncMock(
+        return_value=user
+    )
+
+    auth_service.user_repo.update_user_refresh_token = mocker.AsyncMock()
+
+    tokens = await auth_service.refresh(old_refresh_token)
+
+    assert tokens.access_token == new_access_token
+    assert tokens.refresh_token == new_refresh_token
+    auth_service.user_repo.update_user_refresh_token.assert_called_once_with(
+        user_id, new_refresh_token
+    )
+
+
+@pytest.mark.asyncio
+async def test_refresh_invalid_token(auth_service, mocker):
+    mocker.patch(
+        "app.services.auth.auth_service.decode_token",
+        side_effect=Exception("Invalid token")
+    )
+
+    with pytest.raises(InvalidCredentials, match="Invalid refresh token"):
+        await auth_service.refresh("invalid_token")
+
+
+@pytest.mark.asyncio
+async def test_refresh_user_not_found(auth_service, mocker):
+    valid_token = "valid_refresh_token"
+
+    mocker.patch(
+        "app.services.auth.auth_service.decode_token",
+        return_value={"sub": "1"}
+    )
+
+    auth_service.user_repo.get = mocker.AsyncMock(return_value=None)
+
+    with pytest.raises(InvalidCredentials, match="Invalid refresh token"):
+        await auth_service.refresh(valid_token)
+
+
+@pytest.mark.asyncio
+async def test_refresh_token_mismatch(auth_service, mocker):
+    user_id = 1
+    invalid_refresh_token = "invalid_refresh_token"
+
+    mocker.patch(
+        "app.services.auth.auth_service.decode_token",
+        return_value={"sub": str(user_id)}
+    )
+
+    user = User(
+        id=user_id,
+        email="email",
+        hashed_password="hashed_password",
+        refresh_token="other_refresh_token",
+        first_name="John",
+        last_name="Doe",
+        is_active=True
+    )
+    auth_service.user_repo.get = mocker.AsyncMock(return_value=user)
+
+    with pytest.raises(InvalidCredentials, match="Invalid refresh token"):
+        await auth_service.refresh(invalid_refresh_token)
