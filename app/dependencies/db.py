@@ -1,9 +1,8 @@
 from typing import AsyncGenerator
-from fastapi import Request
 from prisma import Prisma
 
 
-async def get_db_session(request: Request) -> AsyncGenerator[Prisma, None]:
+async def get_db_session() -> AsyncGenerator[Prisma, None]:
     """
     Create and get database session.
 

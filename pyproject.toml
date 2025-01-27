@@ -15,6 +15,7 @@ sentry-sdk = "^2.20.0"
 prisma = "^0.15.0"
 ujson = "^5.10.0"
 pytest-asyncio = "^0.25.2"
+argon2-cffi = "^23.1.0"
 
 
 [tool.poetry.group.dev.dependencies]

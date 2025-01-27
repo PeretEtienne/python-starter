@@ -3,6 +3,7 @@ from app.repository.user.dto import CreateUserDTO
 from app.repository.user.user_repository import UserRepository
 from app.services.auth.dto import RegisterData
 from app.services.auth.errors import UserAlreadyExists
+from app.utils.security import hash_password
 
 
 class AuthService():
@@ -19,5 +20,5 @@ class AuthService():
             email=data.email,
             first_name=data.first_name,
             last_name=data.last_name,
-            hashed_password=data.password,
+            hashed_password=hash_password(data.password),
         ))
