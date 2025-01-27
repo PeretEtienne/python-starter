@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Annotated
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
@@ -14,7 +15,12 @@ async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
     db: Prisma = Depends(get_db_session),
 ) -> User:
-    user_id_str = decode_token(token).get("sub")
+    decoded_token = decode_token(token)
+    user_id_str = decoded_token.get("sub")
+
+    exp = decoded_token.get("exp")
+    if not exp or datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(timezone.utc):
+        raise HTTPException(status_code=401, detail="Token has expired")
 
     if not user_id_str:
         raise HTTPException(status_code=400, detail="Invalid token")

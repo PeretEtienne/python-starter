@@ -1,9 +1,9 @@
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from prisma.models import User
 from app.repository.user.dto import CreateUserDTO
 from app.repository.user.user_repository import UserRepository
 from app.services.auth.dto import RegisterData, Tokens
-from app.services.auth.errors import InvalidCredentials, UserAlreadyExists
+from app.services.auth.errors import InvalidCredentials, TokenExpired, UserAlreadyExists
 from app.settings import settings
 from app.utils.security import create_access_token, decode_token, hash_password, verify_password
 
@@ -53,10 +53,15 @@ class AuthService():
 
     async def refresh(self, refresh_token: str) -> Tokens:
         try:
-            user_id_str = decode_token(refresh_token).get("sub")
-        except Exception:
-            raise InvalidCredentials("Invalid refresh token")
+            decoded_token = decode_token(refresh_token)
+        except Exception as e:
+            raise InvalidCredentials("Invalid refresh token") from e
 
+        exp = decoded_token.get("exp")
+        if not exp or datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(timezone.utc):
+            raise TokenExpired("Token has expired")
+
+        user_id_str = decoded_token.get("sub")
         if not user_id_str:
             raise InvalidCredentials("Invalid refresh token")
 

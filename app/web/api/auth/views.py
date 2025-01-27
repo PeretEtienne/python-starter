@@ -9,7 +9,7 @@ from app.dependencies.db import get_db_session
 from app.repository.user.user_repository import UserRepository
 from app.services.auth.auth_service import AuthService
 from app.services.auth.dto import RegisterData
-from app.services.auth.errors import InvalidCredentials, UserAlreadyExists
+from app.services.auth.errors import InvalidCredentials, TokenExpired, UserAlreadyExists
 from app.settings import settings
 from app.web.api.auth.schemas import (RefreshPayloadSchema, RegisterPayloadSchema, TokensSchema)
 
@@ -89,7 +89,7 @@ async def refresh(
 ):
     try:
         credentials = await service.refresh(payload.refresh_token)
-    except InvalidCredentials as e:
+    except (InvalidCredentials, TokenExpired) as e:
         logger.error(str(e))
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
     except Exception as e:
