@@ -1,10 +1,14 @@
 services:
   api: &main_app
+    ports:
+      - "8000:8000"
     build:
       context: .
       dockerfile: ./Dockerfile
     image: api:${API_VERSION:-latest}
     restart: always
+    volumes:
+      - .:/app
     env_file:
       - .env
     depends_on:
@@ -17,10 +21,15 @@ services:
       API_DB_USER: api
       API_DB_PASS: api
       API_DB_BASE: api
+      API_RELOAD: "True"
+    networks:
+      - local
 
   db:
     image: postgres:16.3-bullseye
     hostname: api-db
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_PASSWORD: "api"
       POSTGRES_USER: "api"
@@ -33,7 +42,13 @@ services:
       interval: 2s
       timeout: 3s
       retries: 40
+    networks:
+      - local
 
 volumes:
   api-db-data:
     name: api-db-data
+
+networks:
+  local:
+    external: true

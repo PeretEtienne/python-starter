@@ -25,6 +25,8 @@ RUN apt-get purge -y \
 COPY . /app
 RUN --mount=type=cache,target=/tmp/poetry_cache poetry install --only main
 
+RUN ["prisma", "generate", "--schema", "app/prisma/schema.prisma"]
+
 CMD ["/usr/local/bin/python", "-m", "app"]
 
 FROM prod AS dev
