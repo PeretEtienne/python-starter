@@ -1,7 +1,7 @@
 import pytest
 from app.services.auth.auth_service import AuthService
 from app.services.auth.dto import RegisterData, Tokens
-from app.services.auth.errors import InvalidCredentials, UserAlreadyExists
+from app.services.auth.errors import InvalidCredentials, TokenExpired, UserAlreadyExists
 from prisma.models import User
 
 
@@ -195,7 +195,7 @@ async def test_refresh_success(auth_service, mocker):
 
     mocker.patch(
         "app.services.auth.auth_service.decode_token",
-        return_value={"sub": str(user_id)}
+        return_value={"sub": str(user_id), "exp": 9999999999}
     )
 
     mocker.patch(
@@ -244,7 +244,7 @@ async def test_refresh_user_not_found(auth_service, mocker):
 
     mocker.patch(
         "app.services.auth.auth_service.decode_token",
-        return_value={"sub": "1"}
+        return_value={"sub": "1", "exp": 9999999999}
     )
 
     auth_service.user_repo.get = mocker.AsyncMock(return_value=None)
@@ -254,13 +254,24 @@ async def test_refresh_user_not_found(auth_service, mocker):
 
 
 @pytest.mark.asyncio
+async def test_refresh_token_expired(auth_service, mocker):
+    mocker.patch(
+        "app.services.auth.auth_service.decode_token",
+        return_value={"sub": "1", "exp": 0}
+    )
+
+    with pytest.raises(TokenExpired, match="Token has expired"):
+        await auth_service.refresh("token")
+
+
+@pytest.mark.asyncio
 async def test_refresh_token_mismatch(auth_service, mocker):
     user_id = 1
     invalid_refresh_token = "invalid_refresh_token"
 
     mocker.patch(
         "app.services.auth.auth_service.decode_token",
-        return_value={"sub": str(user_id)}
+        return_value={"sub": str(user_id), "exp": 9999999999}
     )
 
     user = User(
