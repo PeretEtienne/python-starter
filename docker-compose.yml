@@ -2,6 +2,7 @@ services:
   api: &main_app
     ports:
       - "8000:8000"
+      - "5555:5555"
     build:
       context: .
       dockerfile: ./Dockerfile
@@ -24,6 +25,7 @@ services:
       API_RELOAD: "True"
     networks:
       - local
+    command: sh -c "prisma studio --schema app/prisma/schema.prisma & /usr/local/bin/python -m app"
 
   db:
     image: postgres:16.3-bullseye
