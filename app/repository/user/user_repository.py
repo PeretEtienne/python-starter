@@ -37,3 +37,17 @@ class UserRepository():
                 "refresh_token": refresh_token,
             }
         )
+
+    async def update_user_reset_token(
+        self,
+        user_id: int,
+        reset_token: str
+    ) -> User | None:
+        return await self.db.user.update(
+            where={
+                "id": user_id
+            },
+            data={
+                "reset_token": reset_token,
+            }
+        )

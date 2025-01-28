@@ -16,5 +16,6 @@ model User {
   last_name       String
   hashed_password String
   refresh_token   String?
+  reset_token     String?
   is_active       Boolean @default(true)
 }

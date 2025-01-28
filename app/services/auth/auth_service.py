@@ -3,7 +3,7 @@ from prisma.models import User
 from app.repository.user.dto import CreateUserDTO
 from app.repository.user.user_repository import UserRepository
 from app.services.auth.dto import RegisterData, Tokens
-from app.services.auth.errors import InvalidCredentials, TokenExpired, UserAlreadyExists
+from app.services.auth.errors import InvalidCredentials, TokenExpired, UserAlreadyExists, UserDoesNotExist
 from app.settings import settings
 from app.utils.security import create_access_token, decode_token, hash_password, verify_password
 
@@ -29,7 +29,6 @@ class AuthService():
         user = await self.user_repo.get_user_by_email(email)
 
         if not user:
-            print('no user')
             raise InvalidCredentials('Invalid credentials')
 
         if not verify_password(user.hashed_password, password):
@@ -87,3 +86,16 @@ class AuthService():
         await self.user_repo.update_user_refresh_token(user.id, refresh_token)
 
         return Tokens(access_token=access_token, refresh_token=refresh_token)
+
+    async def forgot_password(self, email: str):
+        user = await self.user_repo.get_user_by_email(email)
+
+        if not user:
+            raise UserDoesNotExist("User does not exist")
+
+        reset_token_expires = timedelta(seconds=settings.auth_reset_seconds)
+        reset_token = create_access_token(
+            data={"sub": str(user.id)}, expires_delta=reset_token_expires
+        )
+
+        await self.user_repo.update_user_reset_token(user.id, reset_token)

@@ -21,3 +21,9 @@ class RefreshPayloadSchema(BaseModel):
     """Refresh payload schema."""
 
     refresh_token: str
+
+
+class ForgotPasswordPayloadSchema(BaseModel):
+    """Forgot password payload schema."""
+
+    email: EmailStr
