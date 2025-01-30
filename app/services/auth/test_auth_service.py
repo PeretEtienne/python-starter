@@ -1,10 +1,12 @@
+from datetime import timedelta
 import pytest
 from app.services.auth.auth_service import AuthService
 from app.services.auth.dto import RegisterData, Tokens
-from app.services.auth.errors import InvalidCredentials, TokenExpired, UserAlreadyExists
+from app.services.auth.errors import InvalidCredentials, TokenExpired, UserAlreadyExists, UserDoesNotExist
 from prisma.models import User
 
-from app.utils.security import verify_password
+from app.settings import settings
+from app.utils.security import create_access_token, verify_password
 
 
 @pytest.fixture
@@ -241,6 +243,17 @@ async def test_refresh_invalid_token(auth_service, mocker):
 
 
 @pytest.mark.asyncio
+async def test_refresh_token_with_invalid_data(auth_service, mocker):
+    mocker.patch(
+        "app.services.auth.auth_service.decode_token",
+        return_value={"exp": 9999999999}
+    )
+
+    with pytest.raises(InvalidCredentials, match="Invalid refresh token"):
+        await auth_service.refresh("invalid_token")
+
+
+@pytest.mark.asyncio
 async def test_refresh_user_not_found(auth_service, mocker):
     valid_token = "valid_refresh_token"
 
@@ -292,6 +305,48 @@ async def test_refresh_token_mismatch(auth_service, mocker):
 
 
 @pytest.mark.asyncio
+async def test_forgot_password_success(auth_service, mocker):
+    email = "test@example.com"
+    user_id = 1
+    user = User(
+        id=user_id,
+        email=email,
+        hashed_password="hashed_password",
+        reset_token=None,
+        first_name="John",
+        last_name="Doe",
+        is_active=True
+    )
+
+    auth_service.user_repo.get_user_by_email = mocker.AsyncMock(return_value=user)
+    auth_service.user_repo.update_user_reset_token = mocker.AsyncMock()
+
+    expected_expires = timedelta(seconds=settings.auth_reset_seconds)
+    expected_token = create_access_token(data={"sub": str(user_id)}, expires_delta=expected_expires)
+
+    mocker.patch("app.utils.security.create_access_token", return_value=expected_token)
+
+    reset_token = await auth_service.forgot_password(email)
+
+    auth_service.user_repo.get_user_by_email.assert_awaited_once_with(email)
+    auth_service.user_repo.update_user_reset_token.assert_awaited_once_with(user_id, expected_token)
+
+    assert reset_token == expected_token
+
+
+@pytest.mark.asyncio
+async def test_forgot_password_user_not_found(auth_service, mocker):
+    email = "unknown@example.com"
+
+    auth_service.user_repo.get_user_by_email = mocker.AsyncMock(return_value=None)
+
+    with pytest.raises(UserDoesNotExist, match="User does not exist"):
+        await auth_service.forgot_password(email)
+
+    auth_service.user_repo.get_user_by_email.assert_awaited_once_with(email)
+
+
+@pytest.mark.asyncio
 async def test_reset_password_success(auth_service, mocker):
     reset_token = "valid_reset_token"
     new_password = "new_password"
@@ -340,6 +395,17 @@ async def test_reset_password_invalid_token(auth_service, mocker):
 
     with pytest.raises(InvalidCredentials, match="Invalid reset token"):
         await auth_service.reset_password(reset_token, new_password)
+
+
+@pytest.mark.asyncio
+async def test_reset_token_with_invalid_data(auth_service, mocker):
+    mocker.patch(
+        "app.services.auth.auth_service.decode_token",
+        return_value={"exp": 9999999999}
+    )
+
+    with pytest.raises(InvalidCredentials, match="Invalid refresh token"):
+        await auth_service.reset_password("invalid_token", "new_password")
 
 
 @pytest.mark.asyncio
