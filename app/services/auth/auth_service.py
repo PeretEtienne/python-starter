@@ -87,7 +87,7 @@ class AuthService():
 
         return Tokens(access_token=access_token, refresh_token=refresh_token)
 
-    async def forgot_password(self, email: str):
+    async def forgot_password(self, email: str) -> str:
         user = await self.user_repo.get_user_by_email(email)
 
         if not user:
@@ -99,3 +99,5 @@ class AuthService():
         )
 
         await self.user_repo.update_user_reset_token(user.id, reset_token)
+
+        return reset_token

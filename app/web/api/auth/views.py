@@ -1,5 +1,5 @@
 import logging
-from typing import Annotated
+from typing import Annotated, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -109,8 +109,10 @@ async def forgot_password(
     payload: ForgotPasswordPayloadSchema,
     service: AuthService = Depends(get_auth_service),
 ):
+    token: Optional[str] = None
+
     try:
-        await service.forgot_password(payload.email)
+        token = await service.forgot_password(payload.email)
     except UserDoesNotExist:
         pass
     except Exception as e:
@@ -119,4 +121,11 @@ async def forgot_password(
 
     # NOTE: You probably want to send email here
 
+    if token:
+        logger.info(f"Password reset token: {token}")
+    else:
+        logger.info("Password reset token not generated")
+
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
