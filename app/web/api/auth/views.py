@@ -11,7 +11,7 @@ from app.services.auth.auth_service import AuthService
 from app.services.auth.dto import RegisterData
 from app.services.auth.errors import InvalidCredentials, TokenExpired, UserAlreadyExists, UserDoesNotExist
 from app.settings import settings
-from app.web.api.auth.schemas import (ForgotPasswordPayloadSchema, RefreshPayloadSchema, RegisterPayloadSchema, TokensSchema)
+from app.web.api.auth.schemas import (ForgotPasswordPayloadSchema, RefreshPayloadSchema, RegisterPayloadSchema, ResetPasswordPayloadSchema, TokensSchema)
 
 logger = logging.getLogger(settings.logger_name)
 
@@ -129,3 +129,24 @@ async def forgot_password(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+@app.post(
+    "/auth/reset-password",
+    tags=["auth"],
+    summary="Reset password",
+    name="auth:reset-password",
+)
+async def reset_password(
+    payload: ResetPasswordPayloadSchema,
+    service: AuthService = Depends(get_auth_service),
+):
+
+    try:
+        await service.reset_password(payload.token, payload.password)
+    except (InvalidCredentials, TokenExpired) as e:
+        logger.error(str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+    except Exception as e:
+        logger.error(str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

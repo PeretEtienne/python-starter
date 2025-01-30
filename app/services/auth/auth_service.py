@@ -101,3 +101,31 @@ class AuthService():
         await self.user_repo.update_user_reset_token(user.id, reset_token)
 
         return reset_token
+
+    async def reset_password(
+        self,
+        reset_token: str,
+        password: str
+    ):
+        try:
+            decoded_token = decode_token(reset_token)
+        except Exception as e:
+            raise InvalidCredentials("Invalid reset token") from e
+
+        exp = decoded_token.get("exp")
+        if not exp or datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(timezone.utc):
+            raise TokenExpired("Token has expired")
+
+        user_id_str = decoded_token.get("sub")
+        if not user_id_str:
+            raise InvalidCredentials("Invalid refresh token")
+
+        user_id = int(user_id_str)
+
+        user = await self.user_repo.get(user_id)
+
+        if not user or user.reset_token != reset_token:
+            raise InvalidCredentials("Invalid reset token")
+
+        await self.user_repo.update_user_password(user.id, hash_password(password))
+        await self.user_repo.update_user_reset_token(user.id, None)

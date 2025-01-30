@@ -27,3 +27,10 @@ class ForgotPasswordPayloadSchema(BaseModel):
     """Forgot password payload schema."""
 
     email: EmailStr
+
+
+class ResetPasswordPayloadSchema(BaseModel):
+    """Reset password payload schema."""
+
+    token: str
+    password: str

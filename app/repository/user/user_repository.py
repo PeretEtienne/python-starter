@@ -41,7 +41,7 @@ class UserRepository():
     async def update_user_reset_token(
         self,
         user_id: int,
-        reset_token: str
+        reset_token: str | None
     ) -> User | None:
         return await self.db.user.update(
             where={
@@ -49,5 +49,19 @@ class UserRepository():
             },
             data={
                 "reset_token": reset_token,
+            }
+        )
+
+    async def update_user_password(
+        self,
+        user_id: int,
+        hashed_password: str,
+    ):
+        return await self.db.user.update(
+            where={
+                "id": user_id
+            },
+            data={
+                "hashed_password": hashed_password
             }
         )
