@@ -17,13 +17,15 @@ from app.utils.security import create_access_token, verify_password
 
 
 @pytest.fixture
-def auth_service(mocker: MockerFixture):
+def auth_service(mocker: MockerFixture) -> AuthService:
     user_repo_mock = mocker.MagicMock()
     return AuthService(user_repo_mock)
 
 
 @pytest.mark.asyncio
-async def test_register_user_success(auth_service: AuthService, mocker: MockerFixture):
+async def test_register_user_success(
+    auth_service: AuthService, mocker: MockerFixture,
+) -> None:
     register_data = RegisterData(
         email="test@example.com",
         first_name="John",
@@ -52,7 +54,9 @@ async def test_register_user_success(auth_service: AuthService, mocker: MockerFi
 
 
 @pytest.mark.asyncio
-async def test_register_user_already_exists(auth_service: AuthService, mocker: MockerFixture):
+async def test_register_user_already_exists(
+        auth_service: AuthService, mocker: MockerFixture,
+) -> None:
     register_data = RegisterData(
         email="test@example.com",
         first_name="John",
@@ -74,7 +78,9 @@ async def test_register_user_already_exists(auth_service: AuthService, mocker: M
 
 
 @pytest.mark.asyncio
-async def test_login_success(auth_service: AuthService, mocker: MockerFixture):
+async def test_login_success(
+    auth_service: AuthService, mocker: MockerFixture,
+) -> None:
     email = "test@example.com"
     password = "correct_password"
     hashed_password = "hashed_password"
@@ -108,7 +114,9 @@ async def test_login_success(auth_service: AuthService, mocker: MockerFixture):
 
 
 @pytest.mark.asyncio
-async def test_login_invalid_email(auth_service: AuthService, mocker: MockerFixture):
+async def test_login_invalid_email(
+    auth_service: AuthService, mocker: MockerFixture,
+) -> None:
     email = "invalid@example.com"
     password = "some_password"
 
@@ -121,7 +129,9 @@ async def test_login_invalid_email(auth_service: AuthService, mocker: MockerFixt
 
 
 @pytest.mark.asyncio
-async def test_login_invalid_password(auth_service: AuthService, mocker: MockerFixture):
+async def test_login_invalid_password(
+    auth_service: AuthService, mocker: MockerFixture,
+) -> None:
     email = "test@example.com"
     password = "wrong_password"
     hashed_password = "hashed_password"
@@ -145,7 +155,9 @@ async def test_login_invalid_password(auth_service: AuthService, mocker: MockerF
 
 
 @pytest.mark.asyncio
-async def test_login_update_refresh_token_failed(auth_service: AuthService, mocker: MockerFixture):
+async def test_login_update_refresh_token_failed(
+    auth_service: AuthService, mocker: MockerFixture,
+) -> None:
     email = "test@example.com"
     password = "correct_password"
     hashed_password = "hashed_password"
@@ -181,7 +193,9 @@ async def test_login_update_refresh_token_failed(auth_service: AuthService, mock
 
 
 @pytest.mark.asyncio
-async def test_refresh_success(auth_service: AuthService, mocker: MockerFixture):
+async def test_refresh_success(
+    auth_service: AuthService, mocker: MockerFixture,
+) -> None:
     user_id = 1
     old_refresh_token = "valid_refresh_token"
     new_access_token = "new_access_token"
@@ -222,7 +236,9 @@ async def test_refresh_success(auth_service: AuthService, mocker: MockerFixture)
 
 
 @pytest.mark.asyncio
-async def test_refresh_invalid_token(auth_service: AuthService, mocker: MockerFixture):
+async def test_refresh_invalid_token(
+    auth_service: AuthService, mocker: MockerFixture,
+) -> None:
     mocker.patch(
         "app.services.auth.auth_service.decode_token",
         side_effect=Exception("Invalid token"),
@@ -233,7 +249,9 @@ async def test_refresh_invalid_token(auth_service: AuthService, mocker: MockerFi
 
 
 @pytest.mark.asyncio
-async def test_refresh_token_with_invalid_data(auth_service: AuthService, mocker: MockerFixture):
+async def test_refresh_token_with_invalid_data(
+    auth_service: AuthService, mocker: MockerFixture,
+) -> None:
     mocker.patch(
         "app.services.auth.auth_service.decode_token",
         return_value={"exp": 9999999999},
@@ -244,7 +262,9 @@ async def test_refresh_token_with_invalid_data(auth_service: AuthService, mocker
 
 
 @pytest.mark.asyncio
-async def test_refresh_user_not_found(auth_service: AuthService, mocker: MockerFixture):
+async def test_refresh_user_not_found(
+    auth_service: AuthService, mocker: MockerFixture,
+) -> None:
     valid_token = "valid_refresh_token"
 
     mocker.patch(
@@ -259,7 +279,9 @@ async def test_refresh_user_not_found(auth_service: AuthService, mocker: MockerF
 
 
 @pytest.mark.asyncio
-async def test_refresh_token_expired(auth_service: AuthService, mocker: MockerFixture):
+async def test_refresh_token_expired(
+    auth_service: AuthService, mocker: MockerFixture,
+) -> None:
     mocker.patch(
         "app.services.auth.auth_service.decode_token",
         return_value={"sub": "1", "exp": 0},
@@ -270,7 +292,9 @@ async def test_refresh_token_expired(auth_service: AuthService, mocker: MockerFi
 
 
 @pytest.mark.asyncio
-async def test_refresh_token_mismatch(auth_service: AuthService, mocker: MockerFixture):
+async def test_refresh_token_mismatch(
+    auth_service: AuthService, mocker: MockerFixture,
+) -> None:
     user_id = 1
     invalid_refresh_token = "invalid_refresh_token"
 
@@ -295,7 +319,9 @@ async def test_refresh_token_mismatch(auth_service: AuthService, mocker: MockerF
 
 
 @pytest.mark.asyncio
-async def test_forgot_password_success(auth_service: AuthService, mocker: MockerFixture):
+async def test_forgot_password_success(
+    auth_service: AuthService, mocker: MockerFixture,
+) -> None:
     email = "test@example.com"
     user_id = 1
     user = User(
@@ -325,7 +351,9 @@ async def test_forgot_password_success(auth_service: AuthService, mocker: Mocker
 
 
 @pytest.mark.asyncio
-async def test_forgot_password_user_not_found(auth_service: AuthService, mocker: MockerFixture):
+async def test_forgot_password_user_not_found(
+    auth_service: AuthService, mocker: MockerFixture,
+) -> None:
     email = "unknown@example.com"
 
     auth_service.user_repo.get_user_by_email = mocker.AsyncMock(return_value=None)
@@ -337,7 +365,9 @@ async def test_forgot_password_user_not_found(auth_service: AuthService, mocker:
 
 
 @pytest.mark.asyncio
-async def test_reset_password_success(auth_service: AuthService, mocker: MockerFixture):
+async def test_reset_password_success(
+    auth_service: AuthService, mocker: MockerFixture,
+) -> None:
     reset_token = "valid_reset_token"
     new_password = "new_password"
     user_id = 1
@@ -377,7 +407,9 @@ async def test_reset_password_success(auth_service: AuthService, mocker: MockerF
 
 
 @pytest.mark.asyncio
-async def test_reset_password_invalid_token(auth_service: AuthService, mocker: MockerFixture):
+async def test_reset_password_invalid_token(
+    auth_service: AuthService, mocker: MockerFixture,
+) -> None:
     reset_token = "invalid_reset_token"
     new_password = "new_password"
 
@@ -391,7 +423,9 @@ async def test_reset_password_invalid_token(auth_service: AuthService, mocker: M
 
 
 @pytest.mark.asyncio
-async def test_reset_token_with_invalid_data(auth_service: AuthService, mocker: MockerFixture):
+async def test_reset_token_with_invalid_data(
+    auth_service: AuthService, mocker: MockerFixture,
+) -> None:
     mocker.patch(
         "app.services.auth.auth_service.decode_token",
         return_value={"exp": 9999999999},
@@ -402,7 +436,9 @@ async def test_reset_token_with_invalid_data(auth_service: AuthService, mocker: 
 
 
 @pytest.mark.asyncio
-async def test_reset_password_token_expired(auth_service: AuthService, mocker: MockerFixture):
+async def test_reset_password_token_expired(
+    auth_service: AuthService, mocker: MockerFixture,
+) -> None:
     reset_token = "expired_reset_token"
     new_password = "new_password"
 
@@ -416,7 +452,9 @@ async def test_reset_password_token_expired(auth_service: AuthService, mocker: M
 
 
 @pytest.mark.asyncio
-async def test_reset_password_user_not_found(auth_service: AuthService, mocker: MockerFixture):
+async def test_reset_password_user_not_found(
+    auth_service: AuthService, mocker: MockerFixture,
+) -> None:
     reset_token = "valid_reset_token"
     new_password = "new_password"
 
@@ -432,7 +470,9 @@ async def test_reset_password_user_not_found(auth_service: AuthService, mocker: 
 
 
 @pytest.mark.asyncio
-async def test_reset_password_token_mismatch(auth_service: AuthService, mocker: MockerFixture):
+async def test_reset_password_token_mismatch(
+    auth_service: AuthService, mocker: MockerFixture,
+) -> None:
     reset_token = "valid_reset_token"
     new_password = "new_password"
 

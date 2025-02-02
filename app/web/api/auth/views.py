@@ -4,11 +4,12 @@ from typing import Annotated, Optional
 from fastapi import Depends, FastAPI, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from prisma import Prisma
+from prisma.models import User
 
 from app.dependencies.db import get_db_session
 from app.repository.user.user_repository import UserRepository
 from app.services.auth.auth_service import AuthService
-from app.services.auth.dto import RegisterData
+from app.services.auth.dto import RegisterData, Tokens
 from app.services.auth.errors import (
     InvalidCredentialsError,
     TokenExpiredError,
@@ -45,7 +46,7 @@ def get_auth_service(db: Prisma = Depends(get_db_session)) -> AuthService:
 async def register(
     payload: RegisterPayloadSchema,
     service: AuthService = Depends(get_auth_service),
-):
+) -> User:
     try:
         user = await service.register(RegisterData(**payload.model_dump()))
     except UserAlreadyExistsError as e:
@@ -74,9 +75,9 @@ async def register(
 async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     service: AuthService = Depends(get_auth_service),
-):
+) -> Tokens:
     try:
-        credentials = service.login(form_data.username, form_data.password)
+        credentials = await service.login(form_data.username, form_data.password)
     except InvalidCredentialsError as e:
         logger.error(str(e))
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
@@ -97,9 +98,9 @@ async def login(
 async def refresh(
     payload: RefreshPayloadSchema,
     service: AuthService = Depends(get_auth_service),
-):
+) -> Tokens:
     try:
-        credentials = service.refresh(payload.refresh_token)
+        credentials = await service.refresh(payload.refresh_token)
     except (InvalidCredentialsError, TokenExpiredError) as e:
         logger.error(str(e))
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
@@ -119,7 +120,7 @@ async def refresh(
 async def forgot_password(
     payload: ForgotPasswordPayloadSchema,
     service: AuthService = Depends(get_auth_service),
-):
+) -> Response:
     token: Optional[str] = None
 
     try:
@@ -149,7 +150,7 @@ async def forgot_password(
 async def reset_password(
     payload: ResetPasswordPayloadSchema,
     service: AuthService = Depends(get_auth_service),
-):
+) -> Response:
 
     try:
         await service.reset_password(payload.token, payload.password)

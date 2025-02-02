@@ -58,7 +58,6 @@ lint.select = [
 ]
 lint.ignore = [
   "S105",    # hardcoded password
-  "ANN201",  # Ad return type
   "D103",    # undocumented public function
   "D101",    # undocumented public class
   "D102",    # undocumented public method
@@ -80,6 +79,9 @@ lint.ignore = [
 exclude = [".venv/"]
 lint.mccabe = { max-complexity = 10 }
 line-length = 120
+
+[tool.ruff.lint.pycodestyle]
+max-line-length = 120
 
 [tool.ruff.lint.per-file-ignores]
 "test_*" = [

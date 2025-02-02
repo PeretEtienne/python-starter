@@ -118,7 +118,7 @@ class AuthService():
         self,
         reset_token: str,
         password: str,
-    ):
+    ) -> None:
         try:
             decoded_token = decode_token(reset_token)
         except Exception as e:

@@ -56,7 +56,7 @@ class UserRepository():
         self,
         user_id: int,
         hashed_password: str,
-    ):
+    ) -> User | None:
         return await self.db.user.update(
             where={
                 "id": user_id,
