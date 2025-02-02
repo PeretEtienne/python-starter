@@ -1,13 +1,16 @@
-import pytest
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock
+
+import pytest
 from fastapi import HTTPException
-from datetime import datetime, timezone, timedelta
-from app.dependencies.user import get_current_user
 from prisma.models import User
+from pytest_mock.plugin import MockerFixture
+
+from app.dependencies.user import get_current_user
 
 
 @pytest.fixture
-def mock_db(mocker):
+def mock_db(mocker: MockerFixture):
     db = mocker.Mock()
     db.user.find_first = AsyncMock()
     mocker.patch("app.dependencies.db.get_db_session", return_value=db)
@@ -15,16 +18,16 @@ def mock_db(mocker):
 
 
 @pytest.fixture
-def mock_decode_token(mocker):
+def mock_decode_token(mocker: MockerFixture):
     return mocker.patch("app.dependencies.user.decode_token")
 
 
 @pytest.mark.asyncio
-async def test_get_current_user_valid(mock_db, mock_decode_token):
+async def test_get_current_user_valid(mock_db: MockerFixture, mock_decode_token: MockerFixture):
     user_id = 1
     mock_decode_token.return_value = {
         "sub": str(user_id),
-        "exp": (datetime.now(timezone.utc) + timedelta(minutes=5)).timestamp()
+        "exp": (datetime.now(timezone.utc) + timedelta(minutes=5)).timestamp(),
     }
 
     mock_db.user.find_first.return_value = User(
@@ -34,7 +37,7 @@ async def test_get_current_user_valid(mock_db, mock_decode_token):
         refresh_token="other_refresh_token",
         first_name="John",
         last_name="Doe",
-        is_active=True
+        is_active=True,
     )
 
     user = await get_current_user("valid_token", mock_db)
@@ -42,15 +45,15 @@ async def test_get_current_user_valid(mock_db, mock_decode_token):
     assert user.id == 1
     assert user.email == "test@example.com"
     mock_db.user.find_first.assert_called_once_with(
-        where={"id": user_id, "is_active": True}
+        where={"id": user_id, "is_active": True},
     )
 
 
 @pytest.mark.asyncio
-async def test_get_current_user_token_expired(mock_db, mock_decode_token):
+async def test_get_current_user_token_expired(mock_db: MockerFixture, mock_decode_token: MockerFixture):
     mock_decode_token.return_value = {
         "sub": "1",
-        "exp": (datetime.now(timezone.utc) - timedelta(minutes=5)).timestamp()
+        "exp": (datetime.now(timezone.utc) - timedelta(minutes=5)).timestamp(),
     }
 
     with pytest.raises(HTTPException) as exc_info:
@@ -61,7 +64,7 @@ async def test_get_current_user_token_expired(mock_db, mock_decode_token):
 
 
 @pytest.mark.asyncio
-async def test_get_current_user_invalid_token(mock_db, mock_decode_token):
+async def test_get_current_user_invalid_token(mock_db: MockerFixture, mock_decode_token: MockerFixture):
     mock_decode_token.return_value = {"exp": (datetime.now(timezone.utc) + timedelta(minutes=5)).timestamp()}
 
     with pytest.raises(HTTPException) as exc_info:
@@ -72,10 +75,10 @@ async def test_get_current_user_invalid_token(mock_db, mock_decode_token):
 
 
 @pytest.mark.asyncio
-async def test_get_current_user_user_not_found(mock_db, mock_decode_token):
+async def test_get_current_user_user_not_found(mock_db: MockerFixture, mock_decode_token: MockerFixture):
     mock_decode_token.return_value = {
         "sub": "1",
-        "exp": (datetime.now(timezone.utc) + timedelta(minutes=5)).timestamp()
+        "exp": (datetime.now(timezone.utc) + timedelta(minutes=5)).timestamp(),
     }
 
     mock_db.user.find_first.return_value = None
@@ -88,7 +91,7 @@ async def test_get_current_user_user_not_found(mock_db, mock_decode_token):
 
 
 @pytest.mark.asyncio
-async def test_get_current_user_unexpected_error(mock_db, mock_decode_token):
+async def test_get_current_user_unexpected_error(mock_db: MockerFixture, mock_decode_token: MockerFixture):
     mock_decode_token.side_effect = Exception("Unexpected error")
 
     with pytest.raises(Exception) as exc_info:

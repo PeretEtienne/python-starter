@@ -9,9 +9,20 @@ from app.dependencies.db import get_db_session
 from app.repository.user.user_repository import UserRepository
 from app.services.auth.auth_service import AuthService
 from app.services.auth.dto import RegisterData
-from app.services.auth.errors import InvalidCredentials, TokenExpired, UserAlreadyExists, UserDoesNotExist
+from app.services.auth.errors import (
+    InvalidCredentialsError,
+    TokenExpiredError,
+    UserAlreadyExistsError,
+    UserDoesNotExistError,
+)
 from app.settings import settings
-from app.web.api.auth.schemas import (ForgotPasswordPayloadSchema, RefreshPayloadSchema, RegisterPayloadSchema, ResetPasswordPayloadSchema, TokensSchema)
+from app.web.api.auth.schemas import (
+    ForgotPasswordPayloadSchema,
+    RefreshPayloadSchema,
+    RegisterPayloadSchema,
+    ResetPasswordPayloadSchema,
+    TokensSchema,
+)
 
 logger = logging.getLogger(settings.logger_name)
 
@@ -37,17 +48,17 @@ async def register(
 ):
     try:
         user = await service.register(RegisterData(**payload.model_dump()))
-    except UserAlreadyExists as e:
+    except UserAlreadyExistsError as e:
         logger.error(str(e))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+            detail=str(e),
         ) from e
     except Exception as e:
         logger.error(str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
+            detail=str(e),
         ) from e
 
     return user
@@ -65,8 +76,8 @@ async def login(
     service: AuthService = Depends(get_auth_service),
 ):
     try:
-        credentials = await service.login(form_data.username, form_data.password)
-    except InvalidCredentials as e:
+        credentials = service.login(form_data.username, form_data.password)
+    except InvalidCredentialsError as e:
         logger.error(str(e))
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
     except Exception as e:
@@ -88,8 +99,8 @@ async def refresh(
     service: AuthService = Depends(get_auth_service),
 ):
     try:
-        credentials = await service.refresh(payload.refresh_token)
-    except (InvalidCredentials, TokenExpired) as e:
+        credentials = service.refresh(payload.refresh_token)
+    except (InvalidCredentialsError, TokenExpiredError) as e:
         logger.error(str(e))
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
     except Exception as e:
@@ -113,7 +124,7 @@ async def forgot_password(
 
     try:
         token = await service.forgot_password(payload.email)
-    except UserDoesNotExist:
+    except UserDoesNotExistError:
         pass
     except Exception as e:
         logger.error(str(e))
@@ -142,7 +153,7 @@ async def reset_password(
 
     try:
         await service.reset_password(payload.token, payload.password)
-    except (InvalidCredentials, TokenExpired) as e:
+    except (InvalidCredentialsError, TokenExpiredError) as e:
         logger.error(str(e))
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
     except Exception as e:

@@ -1,14 +1,14 @@
-class UserAlreadyExists(Exception):
+class UserAlreadyExistsError(Exception):
     pass
 
 
-class UserDoesNotExist(Exception):
+class UserDoesNotExistError(Exception):
     pass
 
 
-class TokenExpired(Exception):
+class TokenExpiredError(Exception):
     pass
 
 
-class InvalidCredentials(Exception):
+class InvalidCredentialsError(Exception):
     pass

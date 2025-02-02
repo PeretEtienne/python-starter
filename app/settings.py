@@ -78,6 +78,9 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
     )
 
+    # Static directory
+    static_dir: str = "/app/src/umbrella_api/static"
+
 
 settings = Settings()
 

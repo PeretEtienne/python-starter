@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from typing import Annotated
+
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from prisma import Prisma
@@ -29,7 +30,7 @@ async def get_current_user(
 
     user = await db.user.find_first(where={
         "id": user_id,
-        "is_active": True
+        "is_active": True,
     })
 
     if not user:

@@ -1,7 +1,7 @@
-from argon2 import PasswordHasher
 from datetime import datetime, timedelta, timezone
 
 import jwt
+from argon2 import PasswordHasher
 
 from app.settings import settings
 
@@ -21,12 +21,11 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     else:
         expire = datetime.now(timezone.utc) + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(
+    return jwt.encode(
         to_encode,
         settings.auth_secret,
-        algorithm="HS256"
+        algorithm="HS256",
     )
-    return encoded_jwt
 
 
 def decode_token(token: str):

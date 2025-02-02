@@ -5,6 +5,7 @@ import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import UJSONResponse
+from fastapi.staticfiles import StaticFiles
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
@@ -53,8 +54,8 @@ def get_app() -> FastAPI:
         allow_headers=["*"],
     )
     # # Mounts static files
-    # static_dir = Path(__file__).parent.parent / "static"
-    # app.mount("/static", StaticFiles(directory=static_dir, html=True), name="static")
+    static_dir = settings.static_dir
+    app.mount("/static", StaticFiles(directory=static_dir, html=True), name="static")
 
     # Main router for the API.
     app.include_router(router=api_router, prefix="/api")

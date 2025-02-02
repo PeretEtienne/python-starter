@@ -5,7 +5,7 @@ from app.repository.user.dto import CreateUserDTO
 
 
 class UserRepository():
-    def __init__(self, db: Prisma):
+    def __init__(self, db: Prisma) -> None:
         self.db = db
 
     async def get(self, user_id: int) -> User | None:
@@ -27,29 +27,29 @@ class UserRepository():
     async def update_user_refresh_token(
         self,
         user_id: int,
-        refresh_token: str
+        refresh_token: str,
     ) -> User | None:
         return await self.db.user.update(
             where={
-                "id": user_id
+                "id": user_id,
             },
             data={
                 "refresh_token": refresh_token,
-            }
+            },
         )
 
     async def update_user_reset_token(
         self,
         user_id: int,
-        reset_token: str | None
+        reset_token: str | None,
     ) -> User | None:
         return await self.db.user.update(
             where={
-                "id": user_id
+                "id": user_id,
             },
             data={
                 "reset_token": reset_token,
-            }
+            },
         )
 
     async def update_user_password(
@@ -59,9 +59,9 @@ class UserRepository():
     ):
         return await self.db.user.update(
             where={
-                "id": user_id
+                "id": user_id,
             },
             data={
-                "hashed_password": hashed_password
-            }
+                "hashed_password": hashed_password,
+            },
         )

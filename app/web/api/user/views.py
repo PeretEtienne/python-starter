@@ -25,7 +25,7 @@ router = app.router
     response_model=UserRead,
 )
 async def get_me(
-    user: User = Depends(get_current_user)
+    user: User = Depends(get_current_user),
 ) -> Any:
     """Get current user."""
 
