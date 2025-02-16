@@ -1,0 +1,45 @@
+name: CI Workflow
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "poetry"
+
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v4
+
+      - name: Setup a local virtual environment (if no poetry.toml file)
+        run: |
+          poetry config virtualenvs.create true --local
+          poetry config virtualenvs.in-project true --local
+
+      - uses: actions/cache@v3
+        name: Cache the virtual environment based on poetry.lock
+        with:
+          path: ./.venv
+          key: venv-${{ hashFiles('poetry.lock') }}
+
+      - name: Install project dependencies
+        run: poetry install
+
+      - name: Run ruff (Linter)
+        run: poetry run ruff check .
+
+      - name: Run Pyright (Type Checker)
+        run: poetry run pyright .
+
+      - name: Run pytest with coverage (100% for app/services)
+        run: poetry run pytest --cov=app/services --cov-fail-under=100 --cov-report=term-missing

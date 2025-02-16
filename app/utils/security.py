@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from typing import Any
 
 import jwt
 from argon2 import PasswordHasher
@@ -14,7 +15,7 @@ def verify_password(hashed_password: str, password: str) -> bool:
     return PasswordHasher().verify(hashed_password, password)
 
 
-def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
+def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = None) -> str:
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
@@ -28,5 +29,5 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     )
 
 
-def decode_token(token: str) -> dict:
+def decode_token(token: str) -> dict[str, Any]:
     return jwt.decode(token, settings.auth_secret, algorithms=["HS256"])
