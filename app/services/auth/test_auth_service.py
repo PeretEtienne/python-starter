@@ -5,7 +5,7 @@ from prisma.models import User
 from pytest_mock import MockerFixture
 
 from app.services.auth.auth_service import AuthService
-from app.services.auth.dto import RegisterData, Tokens
+from app.services.auth.dto import RegisterUserInputDTO, TokensDTO
 from app.services.auth.errors import (
     InvalidCredentialsError,
     TokenExpiredError,
@@ -26,7 +26,7 @@ def auth_service(mocker: MockerFixture) -> AuthService:
 async def test_register_user_success(
     auth_service: AuthService, mocker: MockerFixture,
 ) -> None:
-    register_data = RegisterData(
+    register_data = RegisterUserInputDTO(
         email="test@example.com",
         first_name="John",
         last_name="Doe",
@@ -57,7 +57,7 @@ async def test_register_user_success(
 async def test_register_user_already_exists(
         auth_service: AuthService, mocker: MockerFixture,
 ) -> None:
-    register_data = RegisterData(
+    register_data = RegisterUserInputDTO(
         email="test@example.com",
         first_name="John",
         last_name="Doe",
@@ -108,7 +108,7 @@ async def test_login_success(
 
     auth_service.user_repo.get_user_by_email.assert_awaited_once_with(email)
     auth_service.user_repo.update_user_refresh_token.assert_awaited_once_with(user.id, expected_token)
-    assert isinstance(tokens, Tokens)
+    assert isinstance(tokens, TokensDTO)
     assert tokens.access_token == expected_token
     assert tokens.refresh_token == expected_token
 

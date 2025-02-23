@@ -1,7 +1,7 @@
 from prisma import Prisma
 from prisma.models import User
 
-from app.repository.user.dto import CreateUserDTO
+from app.repository.user.dto import CreateUserDBDTO
 
 
 class UserRepository():
@@ -11,12 +11,12 @@ class UserRepository():
     async def get(self, user_id: int) -> User | None:
         return await self.db.user.find_first(where={"id": user_id})
 
-    async def create_user(self, data: CreateUserDTO) -> User:
+    async def create_user(self, dto: CreateUserDBDTO) -> User:
         return await self.db.user.create(data={
-            "email": data.email,
-            "first_name": data.first_name,
-            "last_name": data.last_name,
-            "hashed_password": data.hashed_password,
+            "email": dto.email,
+            "first_name": dto.first_name,
+            "last_name": dto.last_name,
+            "hashed_password": dto.hashed_password,
         })
 
     async def get_user_by_email(self, email: str) -> User | None:

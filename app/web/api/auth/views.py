@@ -9,7 +9,7 @@ from prisma.models import User
 from app.dependencies.db import get_db_session
 from app.repository.user.user_repository import UserRepository
 from app.services.auth.auth_service import AuthService
-from app.services.auth.dto import RegisterData, Tokens
+from app.services.auth.dto import RegisterUserInputDTO, TokensDTO
 from app.services.auth.errors import (
     InvalidCredentialsError,
     TokenExpiredError,
@@ -48,7 +48,12 @@ async def register(
     service: AuthService = Depends(get_auth_service),
 ) -> User:
     try:
-        user = await service.register(RegisterData(**payload.model_dump()))
+        user = await service.register(RegisterUserInputDTO(
+            email=payload.email,
+            first_name=payload.first_name,
+            last_name=payload.last_name,
+            password=payload.password,
+        ))
     except UserAlreadyExistsError as e:
         logger.error(str(e))
         raise HTTPException(
@@ -75,7 +80,7 @@ async def register(
 async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     service: AuthService = Depends(get_auth_service),
-) -> Tokens:
+) -> TokensDTO:
     try:
         credentials = await service.login(form_data.username, form_data.password)
     except InvalidCredentialsError as e:
@@ -98,7 +103,7 @@ async def login(
 async def refresh(
     payload: RefreshPayloadSchema,
     service: AuthService = Depends(get_auth_service),
-) -> Tokens:
+) -> TokensDTO:
     try:
         credentials = await service.refresh(payload.refresh_token)
     except (InvalidCredentialsError, TokenExpiredError) as e:

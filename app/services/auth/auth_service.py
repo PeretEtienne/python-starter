@@ -2,9 +2,9 @@ from datetime import datetime, timedelta, timezone
 
 from prisma.models import User
 
-from app.repository.user.dto import CreateUserDTO
+from app.repository.user.dto import CreateUserDBDTO
 from app.repository.user.user_repository import UserRepository
-from app.services.auth.dto import RegisterData, Tokens
+from app.services.auth.dto import RegisterUserInputDTO, TokensDTO
 from app.services.auth.errors import (
     InvalidCredentialsError,
     TokenExpiredError,
@@ -24,20 +24,20 @@ class AuthService():
     def __init__(self, user_repository: UserRepository) -> None:
         self.user_repo = user_repository
 
-    async def register(self, data: RegisterData) -> User:
+    async def register(self, data: RegisterUserInputDTO) -> User:
         exists = await self.user_repo.get_user_by_email(data.email)
 
         if exists:
             raise UserAlreadyExistsError("User already exists")
 
-        return await self.user_repo.create_user(CreateUserDTO(
+        return await self.user_repo.create_user(CreateUserDBDTO(
             email=data.email,
             first_name=data.first_name,
             last_name=data.last_name,
             hashed_password=hash_password(data.password),
         ))
 
-    async def login(self, email: str, password: str) -> Tokens:
+    async def login(self, email: str, password: str) -> TokensDTO:
         user = await self.user_repo.get_user_by_email(email)
 
         if not user:
@@ -60,9 +60,9 @@ class AuthService():
 
         await self.user_repo.update_user_refresh_token(user.id, refresh_token)
 
-        return Tokens(access_token=access_token, refresh_token=refresh_token)
+        return TokensDTO(access_token=access_token, refresh_token=refresh_token)
 
-    async def refresh(self, refresh_token: str) -> Tokens:
+    async def refresh(self, refresh_token: str) -> TokensDTO:
         try:
             decoded_token = decode_token(refresh_token)
         except Exception as e:
@@ -97,7 +97,7 @@ class AuthService():
 
         await self.user_repo.update_user_refresh_token(user.id, refresh_token)
 
-        return Tokens(access_token=access_token, refresh_token=refresh_token)
+        return TokensDTO(access_token=access_token, refresh_token=refresh_token)
 
     async def forgot_password(self, email: str) -> str:
         user = await self.user_repo.get_user_by_email(email)
