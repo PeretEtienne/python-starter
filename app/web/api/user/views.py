@@ -6,9 +6,7 @@ from prisma.models import User
 
 from app.dependencies.user import get_current_user
 from app.settings import settings
-from app.web.api.user.schemas import (
-    UserRead,
-)
+from app.web.api.user.schemas import GetMeResponse
 
 logger = logging.getLogger(settings.logger_name)
 
@@ -22,7 +20,7 @@ router = app.router
     tags=["users"],
     summary="User: Me",
     name="user:me",
-    response_model=UserRead,
+    response_model=GetMeResponse,
 )
 async def get_me(
     user: User = Depends(get_current_user),

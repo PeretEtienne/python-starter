@@ -8,6 +8,7 @@ from prisma.models import User
 
 from app.dependencies.db import get_db_session
 from app.repository.user.user_repository import UserRepository
+from app.schemas import TokensSchema
 from app.services.auth.auth_service import AuthService
 from app.services.auth.dto import RegisterUserInputDTO, TokensDTO
 from app.services.auth.errors import (
@@ -21,8 +22,8 @@ from app.web.api.auth.schemas import (
     ForgotPasswordPayloadSchema,
     RefreshPayloadSchema,
     RegisterPayloadSchema,
+    RegisterResponse,
     ResetPasswordPayloadSchema,
-    TokensSchema,
 )
 
 logger = logging.getLogger(settings.logger_name)
@@ -42,6 +43,7 @@ def get_auth_service(db: Prisma = Depends(get_db_session)) -> AuthService:
     tags=["auth"],
     summary="Register",
     name="auth:register",
+    response_model=RegisterResponse,
 )
 async def register(
     payload: RegisterPayloadSchema,

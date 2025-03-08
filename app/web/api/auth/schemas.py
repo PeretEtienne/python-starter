@@ -1,37 +1,40 @@
-from typing import Literal
-
 from pydantic import BaseModel, EmailStr
 
+from app.schemas import TokensSchema, UserSchema
 
+
+# /auth/register
 class RegisterPayloadSchema(BaseModel):
-    """Register payload schema."""
-
     first_name: str
     last_name: str
     email: EmailStr
     password: str
 
 
-class TokensSchema(BaseModel):
-    access_token: str
-    refresh_token: str
-    token_type: Literal["bearer"] = "bearer"
+class RegisterResponse(UserSchema):
+    pass
 
 
+# /auth/login
+class LoginResponse(TokensSchema):
+    pass
+
+
+# /auth/refresh
 class RefreshPayloadSchema(BaseModel):
-    """Refresh payload schema."""
-
     refresh_token: str
 
 
-class ForgotPasswordPayloadSchema(BaseModel):
-    """Forgot password payload schema."""
+class RefreshResponse(TokensSchema):
+    pass
 
+
+# /auth/forgot-password
+class ForgotPasswordPayloadSchema(BaseModel):
     email: EmailStr
 
 
+# /auth/reset-password
 class ResetPasswordPayloadSchema(BaseModel):
-    """Reset password payload schema."""
-
     token: str
     password: str
