@@ -25,7 +25,7 @@ services:
       API_RELOAD: "True"
     networks:
       - local
-    command: sh -c "prisma studio --schema app/prisma/schema.prisma & /usr/local/bin/python -m app"
+    command: sh -c "prisma generate --schema app/prisma/schema.prisma & prisma studio --schema app/prisma/schema.prisma & /usr/local/bin/python -m app"
 
   db:
     image: postgres:16.3-bullseye

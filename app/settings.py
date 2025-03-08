@@ -79,7 +79,7 @@ class Settings(BaseSettings):
     )
 
     # Static directory
-    static_dir: str = "/app/src/umbrella_api/static"
+    static_dir: str = "static"
 
 
 settings = Settings()

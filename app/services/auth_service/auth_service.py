@@ -2,10 +2,10 @@ from datetime import datetime, timedelta, timezone
 
 from prisma.models import User
 
-from app.repository.user.dto import CreateUserDBDTO
-from app.repository.user.user_repository import UserRepository
-from app.services.auth.dto import RegisterUserInputDTO, TokensDTO
-from app.services.auth.errors import (
+from app.repository.user_repository.dto import CreateUserDBDTO
+from app.repository.user_repository.user_repository import UserRepository
+from app.services.auth_service.dto import RegisterUserInputDTO, TokensDTO
+from app.services.auth_service.errors import (
     InvalidCredentialsError,
     TokenExpiredError,
     UserAlreadyExistsError,

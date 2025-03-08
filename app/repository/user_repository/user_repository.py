@@ -1,7 +1,7 @@
 from prisma import Prisma
 from prisma.models import User
 
-from app.repository.user.dto import CreateUserDBDTO
+from app.repository.user_repository.dto import CreateUserDBDTO
 
 
 class UserRepository():

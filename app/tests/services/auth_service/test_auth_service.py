@@ -4,9 +4,9 @@ import pytest
 from prisma.models import User
 from pytest_mock import MockerFixture
 
-from app.services.auth.auth_service import AuthService
-from app.services.auth.dto import RegisterUserInputDTO, TokensDTO
-from app.services.auth.errors import (
+from app.services.auth_service.auth_service import AuthService
+from app.services.auth_service.dto import RegisterUserInputDTO, TokensDTO
+from app.services.auth_service.errors import (
     InvalidCredentialsError,
     TokenExpiredError,
     UserAlreadyExistsError,
@@ -85,7 +85,7 @@ async def test_login_success(
     password = "correct_password"
     hashed_password = "hashed_password"
 
-    mocker.patch("app.services.auth.auth_service.verify_password", return_value=True)
+    mocker.patch("app.services.auth_service.auth_service.verify_password", return_value=True)
 
     user = User(
         id=1,
@@ -99,7 +99,7 @@ async def test_login_success(
     auth_service.user_repo.update_user_refresh_token = mocker.AsyncMock()
 
     mocker.patch(
-        "app.services.auth.auth_service.create_access_token",
+        "app.services.auth_service.auth_service.create_access_token",
         side_effect=lambda data, expires_delta: f"token_{data['sub']}",
     )
     expected_token = f"token_{user.id}"
@@ -136,7 +136,7 @@ async def test_login_invalid_password(
     password = "wrong_password"
     hashed_password = "hashed_password"
 
-    mocker.patch("app.services.auth.auth_service.verify_password", return_value=False)
+    mocker.patch("app.services.auth_service.auth_service.verify_password", return_value=False)
 
     user = User(
         id=1,
@@ -162,7 +162,7 @@ async def test_login_update_refresh_token_failed(
     password = "correct_password"
     hashed_password = "hashed_password"
 
-    mocker.patch("app.services.auth.auth_service.verify_password", return_value=True)
+    mocker.patch("app.services.auth_service.auth_service.verify_password", return_value=True)
 
     user = User(
         id=1,
@@ -178,7 +178,7 @@ async def test_login_update_refresh_token_failed(
     )
 
     mocker.patch(
-        "app.services.auth.auth_service.create_access_token",
+        "app.services.auth_service.auth_service.create_access_token",
         side_effect=lambda data, expires_delta: f"token_{data['sub']}",
     )
     expected_token = f"token_{user.id}"
@@ -202,12 +202,12 @@ async def test_refresh_success(
     new_refresh_token = "new_refresh_token"
 
     mocker.patch(
-        "app.services.auth.auth_service.decode_token",
+        "app.services.auth_service.auth_service.decode_token",
         return_value={"sub": str(user_id), "exp": 9999999999},
     )
 
     mocker.patch(
-        "app.services.auth.auth_service.create_access_token",
+        "app.services.auth_service.auth_service.create_access_token",
         side_effect=[new_access_token, new_refresh_token],
     )
 
@@ -240,7 +240,7 @@ async def test_refresh_invalid_token(
     auth_service: AuthService, mocker: MockerFixture,
 ) -> None:
     mocker.patch(
-        "app.services.auth.auth_service.decode_token",
+        "app.services.auth_service.auth_service.decode_token",
         side_effect=Exception("Invalid token"),
     )
 
@@ -253,7 +253,7 @@ async def test_refresh_token_with_invalid_data(
     auth_service: AuthService, mocker: MockerFixture,
 ) -> None:
     mocker.patch(
-        "app.services.auth.auth_service.decode_token",
+        "app.services.auth_service.auth_service.decode_token",
         return_value={"exp": 9999999999},
     )
 
@@ -268,7 +268,7 @@ async def test_refresh_user_not_found(
     valid_token = "valid_refresh_token"
 
     mocker.patch(
-        "app.services.auth.auth_service.decode_token",
+        "app.services.auth_service.auth_service.decode_token",
         return_value={"sub": "1", "exp": 9999999999},
     )
 
@@ -283,7 +283,7 @@ async def test_refresh_token_expired(
     auth_service: AuthService, mocker: MockerFixture,
 ) -> None:
     mocker.patch(
-        "app.services.auth.auth_service.decode_token",
+        "app.services.auth_service.auth_service.decode_token",
         return_value={"sub": "1", "exp": 0},
     )
 
@@ -299,7 +299,7 @@ async def test_refresh_token_mismatch(
     invalid_refresh_token = "invalid_refresh_token"
 
     mocker.patch(
-        "app.services.auth.auth_service.decode_token",
+        "app.services.auth_service.auth_service.decode_token",
         return_value={"sub": str(user_id), "exp": 9999999999},
     )
 
@@ -373,7 +373,7 @@ async def test_reset_password_success(
     user_id = 1
 
     mocker.patch(
-        "app.services.auth.auth_service.decode_token",
+        "app.services.auth_service.auth_service.decode_token",
         return_value={"sub": "1", "exp": 9999999999},
     )
 
@@ -414,7 +414,7 @@ async def test_reset_password_invalid_token(
     new_password = "new_password"
 
     mocker.patch(
-        "app.services.auth.auth_service.decode_token",
+        "app.services.auth_service.auth_service.decode_token",
         side_effect=Exception("Invalid token"),
     )
 
@@ -427,7 +427,7 @@ async def test_reset_token_with_invalid_data(
     auth_service: AuthService, mocker: MockerFixture,
 ) -> None:
     mocker.patch(
-        "app.services.auth.auth_service.decode_token",
+        "app.services.auth_service.auth_service.decode_token",
         return_value={"exp": 9999999999},
     )
 
@@ -443,7 +443,7 @@ async def test_reset_password_token_expired(
     new_password = "new_password"
 
     mocker.patch(
-        "app.services.auth.auth_service.decode_token",
+        "app.services.auth_service.auth_service.decode_token",
         return_value={"sub": "1", "exp": 0},  # Token expired
     )
 
@@ -459,7 +459,7 @@ async def test_reset_password_user_not_found(
     new_password = "new_password"
 
     mocker.patch(
-        "app.services.auth.auth_service.decode_token",
+        "app.services.auth_service.auth_service.decode_token",
         return_value={"sub": "1", "exp": 9999999999},
     )
 
@@ -477,7 +477,7 @@ async def test_reset_password_token_mismatch(
     new_password = "new_password"
 
     mocker.patch(
-        "app.services.auth.auth_service.decode_token",
+        "app.services.auth_service.auth_service.decode_token",
         return_value={"sub": "1", "exp": 9999999999},
     )
 

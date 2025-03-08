@@ -7,11 +7,11 @@ from prisma import Prisma
 from prisma.models import User
 
 from app.dependencies.db import get_db_session
-from app.repository.user.user_repository import UserRepository
+from app.repository.user_repository.user_repository import UserRepository
 from app.schemas import TokensSchema
-from app.services.auth.auth_service import AuthService
-from app.services.auth.dto import RegisterUserInputDTO, TokensDTO
-from app.services.auth.errors import (
+from app.services.auth_service.auth_service import AuthService
+from app.services.auth_service.dto import RegisterUserInputDTO, TokensDTO
+from app.services.auth_service.errors import (
     InvalidCredentialsError,
     TokenExpiredError,
     UserAlreadyExistsError,

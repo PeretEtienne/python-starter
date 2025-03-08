@@ -98,4 +98,3 @@ async def test_get_current_user_unexpected_error(mock_db: AsyncMock, mock_decode
         await get_current_user("valid_token", mock_db)
 
     assert str(exc_info.value) == "Unexpected error"
-
