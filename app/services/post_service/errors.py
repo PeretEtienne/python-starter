@@ -1,0 +1,6 @@
+class NotAuthorizedPatchPostError(Exception):
+    ...
+
+
+class PostNotFoundError(Exception):
+    ...

@@ -19,4 +19,14 @@ model User {
   refresh_token   String?
   reset_token     String?
   is_active       Boolean @default(true)
+  posts           Post[]
+}
+
+model Post {
+  id        Int     @id @default(autoincrement())
+  title     String
+  content   String
+  published Boolean @default(false)
+  author    User    @relation(fields: [author_id], references: [id])
+  author_id Int
 }
