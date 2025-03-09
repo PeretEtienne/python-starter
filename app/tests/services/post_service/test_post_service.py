@@ -153,9 +153,11 @@ async def test_patch_post_success(
     mocker: MockerFixture,
 ) -> None:
     post_id = 1
+    updated_title = "new title"
+    updated_content = "new content"
     post_updates = PostUpdateDTO(
-        title="new title",
-        content="new content",
+        title=updated_title,
+        content=updated_content,
     )
 
     post_service.post_repo.get_by_id = mocker.AsyncMock(return_value=mock_post)
@@ -172,7 +174,7 @@ async def test_patch_post_success(
     )
     post_service.post_repo.patch_post.assert_awaited_once_with(
         post_id,
-        PostUpdateInput(title=post_updates.title),
+        PostUpdateInput(title=updated_title),
     )
 
 

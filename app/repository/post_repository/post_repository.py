@@ -1,4 +1,7 @@
-from prisma import Prisma
+from dataclasses import dataclass
+from typing import Optional
+
+from prisma import Prisma, types
 from prisma.models import Post
 from prisma.partials import PostWithAuthor
 from prisma.types import PostCreateInput, PostUpdateInput
@@ -16,17 +19,29 @@ class PostRepository():
             "id": post_id,
         })
 
-    async def get_published(self) -> list[PostWithAuthor]:
+    async def get_published(self, filters: "GetPublishedFilters") -> list[PostWithAuthor]:
+        where_conditions: types.PostWhereInput = {}
+
+        if filters.user_first_name:
+            where_conditions["author"] = {
+                "is": {
+                    "OR": [
+                        {
+                            "first_name": {
+                                "contains": filters.user_first_name,
+                            },
+                            "last_name": {
+                                "contains": filters.user_first_name,
+                            },
+                        },
+                    ],
+                },
+            }
+
         return await PostWithAuthor.prisma().find_many(
             where={
                 "published": True,
-                "author": {
-                    "is": {
-                        "first_name": {
-                            "contains": "test",
-                        },
-                    },
-                },
+                **where_conditions,
             },
             include={
                 "author": True,
@@ -40,3 +55,8 @@ class PostRepository():
                 "id": post_id,
             },
         )
+
+
+@dataclass
+class GetPublishedFilters():
+    user_first_name: Optional[str] = None
