@@ -100,3 +100,6 @@ allow-magic-value-types = ["int", "str", "float", "bytes"]
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pyright]
+typeCheckingMode = "strict"
