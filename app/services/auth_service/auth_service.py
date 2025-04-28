@@ -2,15 +2,15 @@ from datetime import datetime, timedelta, timezone
 
 from prisma.models import User
 
-from app.repository.user_repository.dto import CreateUserDBDTO
 from app.repository.user_repository.user_repository import UserRepository
-from app.services.auth_service.dto import RegisterUserInputDTO, TokensDTO
+from app.services.auth_service.dto import TokensDTO
 from app.services.auth_service.errors import (
     InvalidCredentialsError,
     TokenExpiredError,
     UserAlreadyExistsError,
     UserDoesNotExistError,
 )
+from app.services.auth_service.schemas import ResetPasswordInputSchema, UserCreateSchema
 from app.settings import settings
 from app.utils.security import (
     create_access_token,
@@ -24,20 +24,31 @@ class AuthService():
     def __init__(self, user_repository: UserRepository) -> None:
         self.user_repo = user_repository
 
-    async def register(self, data: RegisterUserInputDTO) -> User:
-        exists = await self.user_repo.get_user_by_email(data.email)
+    async def register(
+        self, *,
+        first_name: str, last_name: str, email: str, password: str,
+    ) -> User:
+
+        UserCreateSchema(
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            password=password,
+        )
+
+        exists = await self.user_repo.get_user_by_email(email)
 
         if exists:
             raise UserAlreadyExistsError("User already exists")
 
-        return await self.user_repo.create_user(CreateUserDBDTO(
-            email=data.email,
-            first_name=data.first_name,
-            last_name=data.last_name,
-            hashed_password=hash_password(data.password),
-        ))
+        return await self.user_repo.create_user(
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            hashed_password=hash_password(password),
+        )
 
-    async def login(self, email: str, password: str) -> TokensDTO:
+    async def login(self, *, email: str, password: str) -> TokensDTO:
         user = await self.user_repo.get_user_by_email(email)
 
         if not user:
@@ -116,9 +127,14 @@ class AuthService():
 
     async def reset_password(
         self,
+        *,
         reset_token: str,
         password: str,
     ) -> None:
+        ResetPasswordInputSchema(
+            password=password,
+        )
+
         try:
             decoded_token = decode_token(reset_token)
         except Exception as e:

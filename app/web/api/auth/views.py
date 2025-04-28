@@ -5,12 +5,13 @@ from fastapi import Depends, FastAPI, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from prisma import Prisma
 from prisma.models import User
+from pydantic import ValidationError
 
 from app.dependencies.db import get_db_session
 from app.repository.user_repository.user_repository import UserRepository
 from app.schemas import TokensSchema
 from app.services.auth_service.auth_service import AuthService
-from app.services.auth_service.dto import RegisterUserInputDTO, TokensDTO
+from app.services.auth_service.dto import TokensDTO
 from app.services.auth_service.errors import (
     InvalidCredentialsError,
     TokenExpiredError,
@@ -50,13 +51,13 @@ async def register(
     service: AuthService = Depends(get_auth_service),
 ) -> User:
     try:
-        user = await service.register(RegisterUserInputDTO(
+        user = await service.register(
             email=payload.email,
             first_name=payload.first_name,
             last_name=payload.last_name,
             password=payload.password,
-        ))
-    except UserAlreadyExistsError as e:
+        )
+    except (UserAlreadyExistsError, ValidationError) as e:
         logger.error(str(e))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -84,7 +85,7 @@ async def login(
     service: AuthService = Depends(get_auth_service),
 ) -> TokensDTO:
     try:
-        credentials = await service.login(form_data.username, form_data.password)
+        credentials = await service.login(email=form_data.username, password=form_data.password)
     except InvalidCredentialsError as e:
         logger.error(str(e))
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
@@ -160,7 +161,7 @@ async def reset_password(
 ) -> Response:
 
     try:
-        await service.reset_password(payload.token, payload.password)
+        await service.reset_password(reset_token=payload.token, password=payload.password)
     except (InvalidCredentialsError, TokenExpiredError) as e:
         logger.error(str(e))
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
