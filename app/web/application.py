@@ -14,15 +14,7 @@ from app.web.api.router import api_router
 
 
 def get_app() -> FastAPI:
-    """
-    Get FastAPI application.
-
-    This is the main constructor of an application.
-
-    :return: application.
-    """
     if settings.sentry_dsn:
-        # Enables sentry integration.
         sentry_sdk.init(
             dsn=settings.sentry_dsn,
             traces_sample_rate=settings.sentry_sample_rate,
@@ -45,7 +37,6 @@ def get_app() -> FastAPI:
         openapi_url="/api/openapi.json",
         default_response_class=UJSONResponse,
     )
-    # Enables CORS for the frontend.
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[settings.frontend_url],
@@ -53,11 +44,9 @@ def get_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    # # Mounts static files
     static_dir = settings.static_dir
     app.mount("/static", StaticFiles(directory=static_dir, html=True), name="static")
 
-    # Main router for the API.
     app.include_router(router=api_router, prefix="/api")
 
     return app

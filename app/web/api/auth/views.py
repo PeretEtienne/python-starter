@@ -1,30 +1,21 @@
 import logging
-from typing import Annotated, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Response, status
-from fastapi.security import OAuth2PasswordRequestForm
 from prisma import Prisma
 from prisma.models import User
 from pydantic import ValidationError
 
+from app.dependencies.auth_dependencies import current_active_user
 from app.dependencies.db import get_db_session
 from app.repository.user_repository.user_repository import UserRepository
-from app.schemas import TokensSchema
 from app.services.auth_service.auth_service import AuthService
-from app.services.auth_service.dto import TokensDTO
 from app.services.auth_service.errors import (
-    InvalidCredentialsError,
-    TokenExpiredError,
     UserAlreadyExistsError,
-    UserDoesNotExistError,
 )
 from app.settings import settings
 from app.web.api.auth.schemas import (
-    ForgotPasswordPayloadSchema,
-    RefreshPayloadSchema,
     RegisterPayloadSchema,
     RegisterResponse,
-    ResetPasswordPayloadSchema,
 )
 
 logger = logging.getLogger(settings.logger_name)
@@ -37,6 +28,29 @@ router = app.router
 def get_auth_service(db: Prisma = Depends(get_db_session)) -> AuthService:
     repository = UserRepository(db)
     return AuthService(repository)
+
+@app.patch(
+    "/users/me/password",
+    tags=["auth"],
+    summary="User: Patch Password",
+    name="user:patch_password",
+    response_class=Response,
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def patch_user_password(
+    updates: UserPasswordUpdate,
+    service: AuthService = Depends(get_auth_service),
+    user: User = Depends(current_active_user),
+) -> None:
+    """Patch user password."""
+
+    try:
+        if not PasswordHasher().verify(user.hashed_password, updates.old_password):
+            raise Exception
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST) from e
+
+    await user_dao.patch_password(user.id, updates.new_password)
 
 
 @app.post(
@@ -71,102 +85,3 @@ async def register(
         ) from e
 
     return user
-
-
-@app.post(
-    "/auth/login",
-    tags=["auth"],
-    summary="Login",
-    name="auth:login",
-    response_model=TokensSchema,
-)
-async def login(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    service: AuthService = Depends(get_auth_service),
-) -> TokensDTO:
-    try:
-        credentials = await service.login(email=form_data.username, password=form_data.password)
-    except InvalidCredentialsError as e:
-        logger.error(str(e))
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
-    except Exception as e:
-        logger.error(str(e))
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
-
-    return credentials
-
-
-@app.post(
-    "auth/refresh",
-    tags=["auth"],
-    summary="Refresh",
-    name="auth:refresh",
-    response_model=TokensSchema,
-)
-async def refresh(
-    payload: RefreshPayloadSchema,
-    service: AuthService = Depends(get_auth_service),
-) -> TokensDTO:
-    try:
-        credentials = await service.refresh(payload.refresh_token)
-    except (InvalidCredentialsError, TokenExpiredError) as e:
-        logger.error(str(e))
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
-    except Exception as e:
-        logger.error(str(e))
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
-
-    return credentials
-
-
-@app.post(
-    "/auth/forgot-password",
-    tags=["auth"],
-    summary="Forgot password",
-    name="auth:forgot-password",
-)
-async def forgot_password(
-    payload: ForgotPasswordPayloadSchema,
-    service: AuthService = Depends(get_auth_service),
-) -> Response:
-    token: Optional[str] = None
-
-    try:
-        token = await service.forgot_password(payload.email)
-    except UserDoesNotExistError:
-        pass
-    except Exception as e:
-        logger.error(str(e))
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
-
-    # NOTE: You probably want to send email here
-
-    if token:
-        logger.info(f"Password reset token: {token}")
-    else:
-        logger.info("Password reset token not generated")
-
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-@app.post(
-    "/auth/reset-password",
-    tags=["auth"],
-    summary="Reset password",
-    name="auth:reset-password",
-)
-async def reset_password(
-    payload: ResetPasswordPayloadSchema,
-    service: AuthService = Depends(get_auth_service),
-) -> Response:
-
-    try:
-        await service.reset_password(reset_token=payload.token, password=payload.password)
-    except (InvalidCredentialsError, TokenExpiredError) as e:
-        logger.error(str(e))
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
-    except Exception as e:
-        logger.error(str(e))
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
-
-    return Response(status_code=status.HTTP_204_NO_CONTENT)

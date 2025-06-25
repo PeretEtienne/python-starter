@@ -2,6 +2,7 @@ import enum
 from typing import Optional
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from yarl import URL
 
 
 class LogLevel(str, enum.Enum):
@@ -47,7 +48,23 @@ class Settings(BaseSettings):
     db_pass: str = "api"
     db_base: str = "admin"
     db_echo: bool = False
-    db_url: str = f"postgresql://{db_user}:{db_pass}@{db_host}:{db_port}/{db_base}"
+
+    @property
+    def db_url(self) -> URL:
+        """
+        Assemble database URL from settings.
+
+        :return: database URL.
+        """
+        return URL.build(
+            scheme="postgresql+asyncpg",
+            host=self.db_host,
+            port=self.db_port,
+            user=self.db_user,
+            password=self.db_pass,
+            path=f"/{self.db_base}",
+        )
+
 
     # Sentry's configuration.
     sentry_dsn: Optional[str] = None
@@ -59,6 +76,8 @@ class Settings(BaseSettings):
     auth_refresh_seconds: int = 86400
     auth_reset_seconds: int = 3600
     auth_token_type: str = "bearer"
+
+    reset_mail_link_expiracy: int = 24  # in hours
 
     # Secret key for the application
     secret_key: str = "my_secret_key"

@@ -12,7 +12,6 @@ yarl = "^1.18.3"
 pydantic-settings = "^2.7.1"
 pydantic = "^2.10.6"
 sentry-sdk = "^2.20.0"
-prisma = "^0.15.0"
 ujson = "^5.10.0"
 pytest-asyncio = "^0.25.2"
 argon2-cffi = "^23.1.0"
@@ -20,6 +19,10 @@ pyjwt = "^2.10.1"
 pytest-cov = "^6.0.0"
 ruff = "^0.9.4"
 pyright = "^1.1.394"
+sqlalchemy = "^2.0.41"
+alembic = "^1.16.2"
+fastapi-users = {extras = ["beanie"], version = "^14.0.1"}
+redmail = "^0.6.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -76,6 +79,7 @@ lint.ignore = [
   "ANN401",  # typing.Any are disallowed in `**kwargs
   "PLR0913", # Too many arguments for function call
   "D106",    # Missing docstring in public nested class
+  "SIM108",  # Prefer using ternary operator instead of if-else
 ]
 exclude = [".venv/"]
 lint.mccabe = { max-complexity = 10 }

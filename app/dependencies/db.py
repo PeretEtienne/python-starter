@@ -1,31 +1,27 @@
-from typing import AsyncGenerator
+from typing import Any, AsyncGenerator
 
-from prisma import Prisma
+from fastapi import Depends
+from fastapi_users.db import SQLAlchemyUserDatabase
+from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.requests import Request
+
+from app.db.models.user_model import User
 
 
-async def get_db_session(
-        use_transaction: bool = False,
-) -> AsyncGenerator[Prisma, None]:
-    """
-    Create and get database session.
-
-    :param request: current request.
-    :yield: database session.
-    """
-    prisma = Prisma()
-    await prisma.connect()
-
-    transaction = prisma.tx()
-    result = await transaction.start() if use_transaction else prisma
+async def get_db_session(request: Request) -> AsyncGenerator[AsyncSession, None]:
+    session: AsyncSession = request.app.state.db_session_factory()
 
     try:
-        yield result
-        if use_transaction:
-            await transaction.commit()
-
-    except Exception as e:
-        if use_transaction:
-            await transaction.rollback()
-        raise e
+        yield session
+        await session.commit()
+    except Exception:
+        await session.rollback()
+        raise
     finally:
-        await prisma.disconnect()
+        await session.close()
+
+
+async def get_user_db(
+    session: AsyncSession = Depends(get_db_session),
+) -> AsyncGenerator[Any, Any]:
+    yield SQLAlchemyUserDatabase(session, User)

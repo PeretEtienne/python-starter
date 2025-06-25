@@ -3,6 +3,11 @@ from pydantic import BaseModel, EmailStr
 from app.schemas import TokensSchema, UserSchema
 
 
+# PATCH /users/me/password
+class UpdatePasswordPayloadSchema(BaseModel):
+    old_password: str
+    new_password: str
+
 # /auth/register
 class RegisterPayloadSchema(BaseModel):
     first_name: str
