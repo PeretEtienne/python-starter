@@ -21,12 +21,19 @@ ruff = "^0.9.4"
 pyright = "^1.1.394"
 sqlalchemy = "^2.0.41"
 alembic = "^1.16.2"
-fastapi-users = {extras = ["sqlalchemy"], version = "^14.0.1"}
+fastapi-users = { extras = ["sqlalchemy"], version = "^14.0.1" }
 redmail = "^0.6.0"
 pytest-mock = "^3.14.1"
 asyncpg = "^0.30.0"
 black = "^25.1.0"
+mypy = "^1.16.1"
 
+[tool.mypy]
+strict = true
+
+[[tool.mypy.overrides]]
+module = "app.tests.*"
+disable_error_code = ["method-assign"]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.4"

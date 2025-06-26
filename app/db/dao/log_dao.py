@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.consts import LogEvent
 from app.db.dao.abstract_dao import AbstractDAO
-from app.db.models.log_model import LogModel
+from app.db.models.log_model import Log
 from app.dependencies.db import get_db_session
 
 
@@ -18,8 +18,8 @@ class LogCreate(BaseModel):
 class LogUpdate(BaseModel):
     pass
 
-class LoggerDAO(AbstractDAO[LogModel, LogCreate, LogUpdate]):
-    model = LogModel
+class LogDAO(AbstractDAO[Log, LogCreate, LogUpdate]):
+    model = Log
 
     def __init__(self, session: AsyncSession = Depends(get_db_session)) -> None:
         self.session = session

@@ -75,7 +75,7 @@ class AbstractDAO(Generic[TModel, TCreate, TUpdate]):
         if hasattr(model, "updated_by") and hasattr(updates, "updated_by"):
             logger.warning("Missing updated_by_id when updating model")
 
-        for attr, value in updates.model_dump():
+        for attr, value in updates.model_dump().items():
             setattr(model, attr, value)
 
         if hasattr(model, "updated_at"):
