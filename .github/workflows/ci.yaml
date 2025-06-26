@@ -39,7 +39,7 @@ jobs:
         run: poetry run ruff check .
 
       - name: Run Pyright (Type Checker)
-        run: poetry run pyright .
+        run: poetry run mypy .
 
       - name: Run pytest with coverage (100% for app/services)
         run: poetry run pytest --cov=app/services --cov-fail-under=100 --cov-report=term-missing

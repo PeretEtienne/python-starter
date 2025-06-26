@@ -6,18 +6,25 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi_users.db import SQLAlchemyUserDatabase
 from pydantic import ValidationError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.auth_backend import BearerResponseRefresh
 from app.auth.auth_token import decode_token, generate_token
 from app.db.dao.user_dao import UserCreate, UserDAO
 from app.db.models.user_model import User
-from app.dependencies.auth_dependencies import auth_backend_refresh, current_active_user, fastapi_users
-from app.dependencies.db import get_user_db
+from app.dependencies.auth_dependencies import auth_backend_refresh, current_active_user, fastapi_users, can
+from app.dependencies.db import get_db_session, get_user_db
 from app.services.user.service import UserService
 from app.settings import settings
 from app.web.api.user.schemas import GetMeResponse, RefreshPayload, UpdatePasswordPayloadSchema, UserRead
+from app.consts import Permission
 
 logger = logging.getLogger(settings.logger_name)
+
+
+def get_user_service(db_session: AsyncSession = Depends(get_db_session)) -> UserService:
+    dao = UserDAO(session=db_session)
+    return UserService(user_dao=dao)
 
 router = APIRouter()
 
@@ -30,7 +37,7 @@ router.include_router(
     fastapi_users.get_register_router(UserRead, UserCreate),  # type: ignore
     prefix="/auth",
     tags=["auth"],
-    # dependencies=[Depends(can(Permission.CREATE_USER))],
+    dependencies=[Depends(can(Permission.CREATE_USER))],
 )
 router.include_router(
     fastapi_users.get_reset_password_router(),
@@ -90,10 +97,6 @@ async def refresh_jwt_token(
         token_type=settings.auth_token_type,
     )
 
-def get_user_service() -> UserService:
-    dao = UserDAO()
-    return UserService(user_dao=dao)
-
 @router.get(
     "/users/me",
     tags=["users"],
@@ -128,7 +131,8 @@ async def patch_user_password(
             new_password=updates.new_password,
         )
     except (ValueError, ValidationError) as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e) from e
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Validation error") from e
     except Exception as e:
+        print(e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from e
 
