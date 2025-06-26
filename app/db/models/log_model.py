@@ -11,6 +11,8 @@ from app.db.models.abstract_model import AbstractModel
 
 class Log(Base, AbstractModel):
 
+    __tablename__ = "log"
+
     event: Mapped[LogEvent] = mapped_column(
         Enum(*LogEvent, name="log_event"),
         nullable=False,

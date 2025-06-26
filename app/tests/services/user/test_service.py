@@ -25,14 +25,14 @@ async def test_change_password_success(user_service: UserService, mocker: Mocker
 
     mock_hasher = mocker.MagicMock()
     mock_hasher.verify.return_value = True
-    mocker.patch("app.services.user.user_service.PasswordHasher", return_value=mock_hasher)
+    mocker.patch("app.services.user.service.PasswordHasher", return_value=mock_hasher)
 
     user_service.user_dao.patch_password = AsyncMock()
 
     await user_service.change_password(
         user=user,
         old_password=old_password,
-        new_passwoard=new_password,
+        new_password=new_password,
     )
 
     mock_hasher.verify.assert_called_once_with(hashed_password, old_password)
@@ -50,13 +50,13 @@ async def test_change_password_wrong_old_password(user_service: UserService, moc
 
     mock_hasher = mocker.MagicMock()
     mock_hasher.verify.side_effect = Exception("Invalid password")
-    mocker.patch("app.services.user.user_service.PasswordHasher", return_value=mock_hasher)
+    mocker.patch("app.services.user.service.PasswordHasher", return_value=mock_hasher)
 
     with pytest.raises(ValueError, match="Old password is incorrect"):
         await user_service.change_password(
             user=user,
             old_password=wrong_password,
-            new_passwoard=new_password,
+            new_password=new_password,
         )
 
     mock_hasher.verify.assert_called_once_with(hashed_password, wrong_password)
@@ -73,13 +73,13 @@ async def test_change_password_invalid_new_password(user_service: UserService, m
 
     mock_hasher = mocker.MagicMock()
     mock_hasher.verify.return_value = True
-    mocker.patch("app.services.user.user_service.PasswordHasher", return_value=mock_hasher)
+    mocker.patch("app.services.user.service.PasswordHasher", return_value=mock_hasher)
 
     with pytest.raises(ValueError, match="Password must contain at least one digit"):
         await user_service.change_password(
             user=user,
             old_password=old_password,
-            new_passwoard=invalid_new_password,
+            new_password=invalid_new_password,
         )
 
     mock_hasher.verify.assert_called_once_with(hashed_password, old_password)
@@ -96,7 +96,7 @@ async def test_change_password_patch_failure(user_service: UserService, mocker: 
 
     mock_hasher = mocker.MagicMock()
     mock_hasher.verify.return_value = True
-    mocker.patch("app.services.user.user_service.PasswordHasher", return_value=mock_hasher)
+    mocker.patch("app.services.user.service.PasswordHasher", return_value=mock_hasher)
 
     user_service.user_dao.patch_password = AsyncMock(side_effect=Exception("DB error"))
 
@@ -104,7 +104,7 @@ async def test_change_password_patch_failure(user_service: UserService, mocker: 
         await user_service.change_password(
             user=user,
             old_password=old_password,
-            new_passwoard=new_password,
+            new_password=new_password,
         )
 
     mock_hasher.verify.assert_called_once_with(hashed_password, old_password)
@@ -117,12 +117,13 @@ def test_valid_password_schema() -> None:
 
 
 @pytest.mark.parametrize("password, expected_error", [
-    ("short1@", "ensure this value has at least 8 characters"),
+    ("short1@", "String should have at least 8 characters"),
+    ("1111111@", "Password must contain at least one letter"),
     ("nouppercase1@", "Password must contain at least one uppercase letter"),
     ("NOLOWERCASE1@", "Password must contain at least one lowercase letter"),
     ("NoDigit@", "Password must contain at least one digit"),
     ("NoSpecial1", "Password must contain at least one special character"),
-    ("A" * 129 + "1@", "ensure this value has at most 128 characters"),
+    ("A" * 129 + "1@", "String should have at most 128 characters"),
 ])
 def test_invalid_password_schema(password: str, expected_error: str) -> None:
     with pytest.raises(ValueError) as exc_info:

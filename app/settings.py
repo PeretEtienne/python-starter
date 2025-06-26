@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     db_port: int = 5432
     db_user: str = "api"
     db_pass: str = "api"
-    db_base: str = "admin"
+    db_base: str = "api"
     db_echo: bool = False
 
     @property

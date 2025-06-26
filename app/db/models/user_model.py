@@ -2,21 +2,22 @@ from datetime import datetime
 from typing import Optional
 
 from fastapi_users.db import SQLAlchemyBaseUserTable
+from sqlalchemy import Integer
 from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy.orm import Mapped, mapped_column, query_expression
-from sqlalchemy.sql.sqltypes import DateTime, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.sql.sqltypes import DateTime, String
 
 from app.consts import Permission
 from app.db.base import Base
+from app.db.models.abstract_model import AbstractModel
 from app.db.models.timestamp_mixin import TimestampMixin
 
 
-class User(Base, SQLAlchemyBaseUserTable[int], TimestampMixin):
+class User(Base, SQLAlchemyBaseUserTable[int], AbstractModel, TimestampMixin):
 
-    id: Mapped[int] = mapped_column(Integer(), primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer(), primary_key=True, autoincrement=True)  # type: ignore
     first_name: Mapped[str] = mapped_column(String(length=255), nullable=False)
     last_name: Mapped[str] = mapped_column(String(length=255), nullable=False)
-    is_superuser = query_expression()
     permissions: Mapped[list[Permission]] = mapped_column(
         ARRAY(String),
         nullable=False,

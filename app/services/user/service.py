@@ -11,16 +11,14 @@ class UserService():
 
     async def change_password(
         self, *,
-        user: User, old_password: str, new_passwoard: str,
+        user: User, old_password: str, new_password: str,
     ) -> None:
         try:
-            if not PasswordHasher().verify(user.hashed_password, old_password):
-                raise Exception
+            PasswordHasher().verify(user.hashed_password, old_password)
         except Exception as e:
             raise ValueError("Old password is incorrect") from e
 
-        schema = ValidatePasswordSchema.model_validate(new_passwoard)
-
+        schema = ValidatePasswordSchema.model_validate({"password": new_password})
         await self.user_dao.patch_password(
             user_id=user.id, password=schema.password,
         )

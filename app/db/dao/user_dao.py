@@ -1,7 +1,7 @@
-from typing import Optional, cast
+from typing import Any, Optional, cast
 
 from argon2 import PasswordHasher
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from sqlalchemy import Column, select
 from sqlalchemy.exc import NoResultFound
 
@@ -34,8 +34,20 @@ class UserDAO(AbstractDAO[User, "UserCreate", "UserUpdatePassword"]):
         )
 
 class UserCreate(BaseModel):
+    def create_update_dict(self) -> dict[str, Any]:
+        return self.model_dump(
+            exclude_unset=True,
+            exclude={
+                "id",
+                "is_active",
+                "is_verified",
+            },
+        )
+
     first_name: str
     last_name: str
+    email: EmailStr
+    password: str
     permissions: list[Permission] = []
 
 class UserUpdatePassword(BaseModel):

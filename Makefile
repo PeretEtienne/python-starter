@@ -12,8 +12,8 @@ down:
 
 test:
 	@echo "Running tests with coverage enforcement..."
-	docker compose exec -T api pytest --cov=app/services --cov-fail-under=100
+	docker compose exec -T api python -m pytest --cov=app/services --cov-fail-under=100
 
 coverage:
 	@echo "Running tests with coverage report..."
-	docker compose exec -T api pytest --cov=app/services --cov-report=html
+	docker compose exec -T api python -m pytest --cov=app/services --cov-report=html

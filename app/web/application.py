@@ -1,5 +1,4 @@
 import logging
-from importlib import metadata
 
 import sentry_sdk
 from fastapi import FastAPI
@@ -9,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
+from app.lifespan import lifespan_setup
 from app.settings import settings
 from app.web.api.router import api_router
 
@@ -31,7 +31,7 @@ def get_app() -> FastAPI:
         )
     app = FastAPI(
         title=settings.app_name,
-        version=metadata.version(settings.app_name),
+        lifespan=lifespan_setup,
         docs_url="/api/docs",
         redoc_url="/api/redoc",
         openapi_url="/api/openapi.json",
