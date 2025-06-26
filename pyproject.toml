@@ -27,6 +27,7 @@ pytest-mock = "^3.14.1"
 asyncpg = "^0.30.0"
 black = "^25.1.0"
 mypy = "^1.16.1"
+benedict = "^0.3.2"
 
 [tool.mypy]
 strict = true

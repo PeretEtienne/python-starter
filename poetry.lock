@@ -243,6 +243,21 @@ tests = ["pytest (>=3.2.1,!=3.3.0)"]
 typecheck = ["mypy"]
 
 [[package]]
+name = "benedict"
+version = "0.3.2"
+description = ""
+optional = false
+python-versions = ">=3.5"
+groups = ["main"]
+files = [
+    {file = "BeneDict-0.3.2-py3-none-any.whl", hash = "sha256:3bff72dc6d30d02fe51f613694c7efa2b21cde4aacc73613726ba3610f900c73"},
+    {file = "BeneDict-0.3.2.tar.gz", hash = "sha256:e6f66b544393fd628110e79af8854b88aa825606247e28c28decdf010c9d5df3"},
+]
+
+[package.dependencies]
+pyyaml = "*"
+
+[[package]]
 name = "black"
 version = "25.1.0"
 description = "The uncompromising code formatter."
@@ -2534,4 +2549,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "c1addfb3cb50201390c25f811a08e4e9540869a38fb07e7e31b4cc9b15446aa6"
+content-hash = "c83a523aa88247898f68c97c3885080c99bc2aa2d37dc2dc8271f4793209fd2e"

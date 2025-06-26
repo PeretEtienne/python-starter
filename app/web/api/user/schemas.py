@@ -1,7 +1,14 @@
 from pydantic import BaseModel, ConfigDict, EmailStr
 
-from app.schemas import UserSchema
 
+class UserSchema(BaseModel):
+    """User schema."""
+
+    id: int
+    first_name: str
+    last_name: str
+    email: EmailStr
+    is_active: bool = True
 
 # GET /users/me
 class GetMeResponse(UserSchema):
