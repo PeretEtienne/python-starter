@@ -65,7 +65,6 @@ class Settings(BaseSettings):
             path=f"/{self.db_base}",
         )
 
-
     # Sentry's configuration.
     sentry_dsn: Optional[str] = None
     sentry_sample_rate: float = 1.0
@@ -91,6 +90,11 @@ class Settings(BaseSettings):
     dev_email: str = "user@example.com"
     vendor_email: str = "vendor@example.com"
 
+    # Error logger
+    exc_info: bool = True
+    stack_info: bool = True
+    stacklevel: int = 1
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_prefix="API_",
@@ -102,4 +106,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-

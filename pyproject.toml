@@ -91,7 +91,7 @@ lint.ignore = [
   "D106",    # Missing docstring in public nested class
   "SIM108",  # Prefer using ternary operator instead of if-else
 ]
-exclude = [".venv/"]
+exclude = [".venv/", "app/db/migrations/versions/"]
 lint.mccabe = { max-complexity = 10 }
 line-length = 120
 

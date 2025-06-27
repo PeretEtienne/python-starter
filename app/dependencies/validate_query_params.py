@@ -49,4 +49,3 @@ def validate_query_params(
         return await parse_query_with_validation(request, model)
 
     return dependency
-

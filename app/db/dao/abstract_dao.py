@@ -34,11 +34,7 @@ class AbstractDAO(Generic[TModel, TCreate, TUpdate]):
         limit: int = 10,
         offset: int = 0,
     ) -> Sequence[TModel]:
-        query = (
-            select(self.model)
-            .where(self.model.is_active.is_(True))
-            .offset(offset)
-        )
+        query = select(self.model).where(self.model.is_active.is_(True)).offset(offset)
 
         if limit > 0:
             query = query.limit(limit)
@@ -51,9 +47,8 @@ class AbstractDAO(Generic[TModel, TCreate, TUpdate]):
         if not hasattr(self.model, "id"):
             raise NotImplementedError("Model has no id field")
 
-        query = (
-            select(self.model)
-            .where(self.model.id == key and self.model.is_active.is_(True))
+        query = select(self.model).where(
+            self.model.id == key and self.model.is_active.is_(True),
         )
 
         rows = await self.session.execute(query)
@@ -137,4 +132,3 @@ class AbstractDAO(Generic[TModel, TCreate, TUpdate]):
 
         await self.session.flush()
         await self.session.refresh(model)
-

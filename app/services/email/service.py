@@ -46,7 +46,9 @@ class EmailService:
     def _render_template(self, message: EmailMessageData) -> str:
         """Render template with provided data."""
         if not message.tpl or not message.data:
-            raise ValueError("Either 'html' must be provided, or both 'tpl' and 'data' must be set.")
+            raise ValueError(
+                "Either 'html' must be provided, or both 'tpl' and 'data' must be set.",
+            )
 
         data = message.data.copy()
         data.setdefault("static_host", settings.static_host)
@@ -69,4 +71,3 @@ class EmailService:
         if settings.dev_email:
             return [settings.dev_email], [settings.dev_email], [settings.dev_email]
         return to, cc, bcc
-

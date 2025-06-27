@@ -1,6 +1,6 @@
 from email.message import EmailMessage
 from pathlib import Path
-from typing import List, Tuple
+from typing import Tuple
 
 import pytest
 from pytest_mock import MockFixture
@@ -16,16 +16,30 @@ def email_service() -> EmailService:
 
 
 @pytest.fixture
-def message_with_html() -> EmailMessageData:
+def message_with_html() -> Tuple[EmailMessageData, dict[str, str | list[str]]]:
+    receivers = ["to@example.com"]
+    subject = "Test Subject"
+    html = "<p>Hello</p>"
+
     return EmailMessageData(
-        receivers=["to@example.com"],
-        subject="Test Subject",
-        html="<p>Hello</p>",
-    )
+        receivers=receivers,
+        subject=subject,
+        html=html,
+    ), {
+        "sender": settings.smtp_user,
+        "receivers": receivers,
+        "cc": [],
+        "bcc": [],
+        "subject": subject,
+        "html": html,
+    }
 
 
 @pytest.fixture
-def message_with_template(tmp_path: Path, monkeypatch: "pytest.MonkeyPatch") -> EmailMessageData:
+def message_with_template(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> Tuple[EmailMessageData, dict[str, str | list[str]]]:
     tpl_dir = tmp_path / "email_tpl"
     tpl_dir.mkdir()
     (tpl_dir / "welcome.html").write_text("Hello {name}, see you at {static_host}")
@@ -33,101 +47,187 @@ def message_with_template(tmp_path: Path, monkeypatch: "pytest.MonkeyPatch") -> 
     monkeypatch.setattr(settings, "static_dir", str(tmp_path))
     monkeypatch.setattr(settings, "static_host", "https://static.example.com")
 
+    receivers = ["to@example.com"]
+    subject = "Welcome!"
+    tpl = "welcome"
+    data_name = "Alice"
+    static_host = settings.static_host
+
     return EmailMessageData(
-        receivers=["to@example.com"],
-        subject="Welcome!",
-        tpl="welcome",
-        data={"name": "Alice"},
-    )
+        receivers=receivers,
+        subject=subject,
+        tpl=tpl,
+        data={"name": data_name},
+    ), {
+        "sender": settings.smtp_user,
+        "receivers": receivers,
+        "cc": [],
+        "bcc": [],
+        "subject": subject,
+        "data_name": data_name,
+        "static_host": static_host,
+    }
 
 
 @pytest.mark.asyncio
 async def test_send_with_html(
     email_service: EmailService,
-    message_with_html: EmailMessageData,
+    message_with_html: Tuple[EmailMessageData, dict[str, str | list[str]]],
     mocker: MockFixture,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(settings, "dev_email", None)
 
+    message, expected = message_with_html
+
     mock_sender = mocker.patch("app.services.email.service.EmailSender")
     mock_send = mock_sender.return_value.send
-
     mock_email = EmailMessage()
-    mock_email["Subject"] = "Test Subject"
+    mock_email["Subject"] = expected["subject"]
     mock_send.return_value = mock_email
 
-    result = email_service.send(message_with_html)
+    result = email_service.send(message)
 
     assert result is mock_email
-    mock_send.assert_called_once_with(
-        sender=settings.smtp_user,
-        receivers=["to@example.com"],
-        cc=[],
-        bcc=[],
-        subject="Test Subject",
-        html="<p>Hello</p>",
-    )
 
+    args = mock_send.call_args.kwargs
+    assert args["sender"] == expected["sender"]
+    assert args["receivers"] == expected["receivers"]
+    assert args["cc"] == expected["cc"]
+    assert args["bcc"] == expected["bcc"]
+    assert args["subject"] == expected["subject"]
+    assert args["html"] == expected["html"]
 
 
 @pytest.mark.asyncio
 async def test_send_with_template(
     email_service: EmailService,
-    message_with_template: EmailMessageData,
+    message_with_template: Tuple[EmailMessageData, dict[str, str | list[str]]],
     mocker: MockFixture,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    monkeypatch.setattr(settings, "dev_email", None)
+
+    message, expected = message_with_template
+
     mock_sender = mocker.patch("app.services.email.service.EmailSender")
     mock_send = mock_sender.return_value.send
-
     mock_email = EmailMessage()
-    mock_email["Subject"] = "Welcome!"
-    mock_email.set_content("Hello Alice, see you at https://static.example.com")
-
+    mock_email["Subject"] = expected["subject"]
     mock_send.return_value = mock_email
 
-    result = email_service.send(message_with_template)
+    result = email_service.send(message)
 
     assert result is mock_email
 
-    mock_send.assert_called_once()
-    assert "Alice" in mock_send.call_args.kwargs["html"]
-    assert "https://static.example.com" in mock_send.call_args.kwargs["html"]
+    args = mock_send.call_args.kwargs
+    assert args["sender"] == expected["sender"]
+    assert args["receivers"] == expected["receivers"]
+    assert args["cc"] == expected["cc"]
+    assert args["bcc"] == expected["bcc"]
+    assert args["subject"] == expected["subject"]
+    assert expected["data_name"] in args["html"]
+    assert expected["static_host"] in args["html"]
 
 
-
-def test_render_template_success(
+@pytest.mark.asyncio
+async def test_send_raises_if_template_missing_data(
     email_service: EmailService,
-    message_with_template: EmailMessageData,
+    tmp_path: Path,
+    mocker: MockFixture,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    html = email_service._render_template(message_with_template)
-    assert html == "Hello Alice, see you at https://static.example.com"
-
-
-def test_render_template_missing_data(
-    email_service: EmailService,
-) -> None:
-    msg = EmailMessageData(receivers=["a"], subject="subject", tpl="test_tpl")
-
-    with pytest.raises(ValueError, match="Either 'html' must be provided"):
-        email_service._render_template(msg)
-
-
-def test_resolve_recipients_normal(email_service: EmailService, monkeypatch: "pytest.MonkeyPatch") -> None:
+    monkeypatch.setattr(settings, "static_dir", str(tmp_path))
+    monkeypatch.setattr(settings, "static_host", "https://static.example.com")
     monkeypatch.setattr(settings, "dev_email", None)
 
-    to: List[str] = ["to@example.com"]
-    cc: List[str] = ["cc@example.com"]
-    bcc: List[str] = ["bcc@example.com"]
+    tpl_dir = tmp_path / "email_tpl"
+    tpl_dir.mkdir()
+    (tpl_dir / "oops.html").write_text("Hello {name}, {static_host}")
 
-    result: Tuple[List[str], List[str], List[str]] = email_service._resolve_recipients(to, cc, bcc)
-    assert result == (to, cc, bcc)
+    message = EmailMessageData(
+        receivers=["to@example.com"],
+        subject="Oops",
+        tpl="oops",
+        data=None,  # pas de data => erreur attendue
+    )
+
+    mocker.patch("app.services.email.service.EmailSender")
+
+    with pytest.raises(ValueError, match="Either 'html' must be provided"):
+        email_service.send(message)
 
 
-def test_resolve_recipients_with_dev(monkeypatch: "pytest.MonkeyPatch") -> None:
-    monkeypatch.setattr(settings, "dev_email", "dev@ex.com")
-    service = EmailService()
+@pytest.mark.asyncio
+async def test_send_with_dev_email(
+    email_service: EmailService,
+    tmp_path: Path,
+    mocker: MockFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "dev_email", "dev@example.com")
+    monkeypatch.setattr(settings, "static_host", "https://static.example.com")
+    monkeypatch.setattr(settings, "static_dir", str(tmp_path))
 
-    result = service._resolve_recipients(["to"], ["cc"], ["bcc"])
-    assert result == (["dev@ex.com"], ["dev@ex.com"], ["dev@ex.com"])
+    tpl_dir = tmp_path / "email_tpl"
+    tpl_dir.mkdir()
+    (tpl_dir / "tpl.html").write_text("Hi {name}, go to {static_host}")
 
+    expected = {
+        "receivers": ["dev@example.com"],
+        "cc": ["dev@example.com"],
+        "bcc": ["dev@example.com"],
+        "subject": "Dev Mode",
+        "data_name": "Bob",
+        "static_host": settings.static_host,
+        "sender": settings.smtp_user,
+    }
+
+    message = EmailMessageData(
+        receivers=["real@example.com"],
+        subject=str(expected["subject"]),
+        tpl="tpl",
+        data={"name": str(expected["data_name"])},
+    )
+
+    mock_sender = mocker.patch("app.services.email.service.EmailSender")
+    mock_email = EmailMessage()
+    mock_email["Subject"] = expected["subject"]
+    mock_sender.return_value.send.return_value = mock_email
+
+    result = email_service.send(message)
+    assert result is mock_email
+
+    args = mock_sender.return_value.send.call_args.kwargs
+    assert args["sender"] == expected["sender"]
+    assert args["receivers"] == expected["receivers"]
+    assert args["cc"] == expected["cc"]
+    assert args["bcc"] == expected["bcc"]
+    assert args["subject"] == expected["subject"]
+    assert expected["data_name"] in args["html"]
+    assert expected["static_host"] in args["html"]
+
+
+@pytest.mark.asyncio
+async def test_send_uses_real_recipients_when_dev_email_not_set(
+    email_service: EmailService,
+    message_with_html: Tuple[EmailMessageData, dict[str, str | list[str]]],
+    mocker: MockFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "dev_email", None)
+
+    message, expected = message_with_html
+
+    mock_sender = mocker.patch("app.services.email.service.EmailSender")
+    mock_email = EmailMessage()
+    mock_email["Subject"] = expected["subject"]
+    mock_sender.return_value.send.return_value = mock_email
+
+    result = email_service.send(message)
+    assert result is mock_email
+
+    args = mock_sender.return_value.send.call_args.kwargs
+    assert args["receivers"] == expected["receivers"]
+    assert args["cc"] == expected["cc"]
+    assert args["bcc"] == expected["bcc"]

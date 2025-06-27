@@ -46,4 +46,3 @@ async def lifespan_setup(
 
     yield
     await app.state.db_engine.dispose()
-

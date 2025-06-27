@@ -10,14 +10,17 @@ class UserSchema(BaseModel):
     email: EmailStr
     is_active: bool = True
 
+
 # GET /users/me
 class GetMeResponse(UserSchema):
     pass
+
 
 # PATCH /users/me/password
 class UpdatePasswordPayloadSchema(BaseModel):
     old_password: str
     new_password: str
+
 
 class UserRead(BaseModel):
     """User read schema."""

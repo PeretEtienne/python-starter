@@ -38,4 +38,3 @@ def decode_token(token: str) -> dict[str, Any]:
         strategy.token_audience,
         algorithms=[strategy.algorithm],
     )
-

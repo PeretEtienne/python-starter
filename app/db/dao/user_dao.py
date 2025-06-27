@@ -33,6 +33,7 @@ class UserDAO(AbstractDAO[User, "UserCreate", "UserUpdatePassword"]):
             ),
         )
 
+
 class UserCreate(BaseModel):
     def create_update_dict(self) -> dict[str, Any]:
         return self.model_dump(
@@ -49,6 +50,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
     permissions: list[Permission] = []
+
 
 class UserUpdatePassword(BaseModel):
     hashed_password: str

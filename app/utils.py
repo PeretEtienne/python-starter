@@ -13,6 +13,7 @@ def not_none(obj: Optional[T]) -> T:
 
 SortDirection = Literal["asc", "desc"]
 
+
 def parse_sort(
     sort: Annotated[str | None, Query()] = None,
 ) -> list[Tuple[str, SortDirection]]:
@@ -33,4 +34,3 @@ def parse_direction(value: str) -> SortDirection:
     if value not in get_args(SortDirection):
         raise ValueError
     return cast(SortDirection, value)
-
