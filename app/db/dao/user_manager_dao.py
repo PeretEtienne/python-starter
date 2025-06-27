@@ -1,5 +1,4 @@
 import hashlib
-import logging
 from datetime import datetime
 from typing import Any, AsyncGenerator, Optional
 
@@ -12,12 +11,11 @@ from app.db.models.user_model import User
 from app.dependencies.db import get_user_db
 from app.services.email.dto import EmailMessageData
 from app.services.email.service import EmailService
+from app.services.logger.service import Logger, LogLevel
 from app.settings import settings
 
 SECRET = settings.auth_secret
 RESET_LIFETIME_SECONDS = settings.auth_reset_seconds
-
-logger = logging.getLogger(settings.logger_name)
 
 
 class UserManager(BaseUserManager[User, int]):
@@ -30,7 +28,7 @@ class UserManager(BaseUserManager[User, int]):
         user: User,
         request: Optional[Request] = None,
     ) -> None:
-        logger.info(f"User {user.email} registered.")
+        Logger.info(f"User {user.email} registered.")
 
     async def on_after_forgot_password(
         self,
@@ -40,8 +38,8 @@ class UserManager(BaseUserManager[User, int]):
     ) -> None:
         receivers = [user.email]
 
-        logger.info(f"User {user.email} forgot password.")
-        logger.debug(f"Reset password token: {token}")
+        Logger.info(f"User {user.email} forgot password.")
+        Logger.log(LogLevel.DEBUG, f"Reset password token: {token}")
 
         EmailService().send(
             EmailMessageData(
@@ -67,11 +65,11 @@ class UserManager(BaseUserManager[User, int]):
         hasher.update(refresh_token.encode())
         user.refresh_token = hasher.hexdigest()
         user.last_login = datetime.now()
-        logger.info(f"User {user.email} logged in.")
+        Logger.info(f"User {user.email} logged in.")
 
     async def on_after_logout(self, user: User, response: Response) -> None:
         user.refresh_token = ""
-        logger.info(f"User {user.email} logged out.")
+        Logger.info(f"User {user.email} logged out.")
 
     def parse_id(self, value: Any) -> int:
         return int(value)

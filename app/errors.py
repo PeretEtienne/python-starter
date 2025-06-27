@@ -32,5 +32,5 @@ class DomainError(Exception):
 
 class ChangePasswordError(StrEnum):
 
-    INVALID_OLD_PASSWORD = "invalid_old_password"
-    INVALID_NEW_PASSWORD = "invalid_new_password"
+    INVALID_OLD_PASSWORD = "INVALID_OLD_PASSWORD"
+    INVALID_NEW_PASSWORD = "INVALID_NEW_PASSWORD"

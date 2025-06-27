@@ -1,13 +1,14 @@
 from typing import Any, Optional, cast
 
 from argon2 import PasswordHasher
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 from sqlalchemy import Column, select
 from sqlalchemy.exc import NoResultFound
 
 from app.consts import Permission
 from app.db.dao.abstract_dao import AbstractDAO
 from app.db.models.user_model import User
+from app.services.user.schemas import validate_password
 
 
 class UserDAO(AbstractDAO[User, "UserCreate", "UserUpdatePassword"]):
@@ -50,6 +51,11 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
     permissions: list[Permission] = []
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, value: str) -> str:
+        return validate_password(value)
 
 
 class UserUpdatePassword(BaseModel):
