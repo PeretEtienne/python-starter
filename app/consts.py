@@ -7,6 +7,6 @@ class Permission(StrEnum):
     IMPERSONATE = "impersonate"
     CREATE_USER = "create_user"
 
-class LogEvent(StrEnum):
+class LogEventType(StrEnum):
     pass
 

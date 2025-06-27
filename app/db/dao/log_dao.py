@@ -1,25 +1,19 @@
 from typing import Any
 
-from fastapi import Depends
 from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.consts import LogEvent
+from app.consts import LogEventType
 from app.db.dao.abstract_dao import AbstractDAO
 from app.db.models.log_model import Log
-from app.dependencies.db import get_db_session
 
 
-class LogCreate(BaseModel):
-    event: LogEvent
+class LogEventCreate(BaseModel):
+    event_type: LogEventType
     details: dict[str, Any]
     created_by: int
 
-class LogUpdate(BaseModel):
+class LogEventUpdate(BaseModel):
     pass
 
-class LogDAO(AbstractDAO[Log, LogCreate, LogUpdate]):
+class LogEventDAO(AbstractDAO[Log, LogEventCreate, LogEventUpdate]):
     model = Log
-
-    def __init__(self, session: AsyncSession = Depends(get_db_session)) -> None:
-        self.session = session

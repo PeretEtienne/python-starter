@@ -4,17 +4,17 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql.sqltypes import Enum
 
-from app.consts import LogEvent
+from app.consts import LogEventType
 from app.db.base import Base
 from app.db.models.abstract_model import AbstractModel
 
 
-class Log(Base, AbstractModel):
+class EventLog(Base, AbstractModel):
 
-    __tablename__ = "log"
+    __tablename__ = "event_log"
 
-    event: Mapped[LogEvent] = mapped_column(
-        Enum(*LogEvent, name="log_event"),
+    event_type: Mapped[LogEventType] = mapped_column(
+        Enum(*LogEventType, name="log_event_type"),
         nullable=False,
     )
     details: Mapped[dict[str, Any]] = mapped_column(type_=JSONB, nullable=False)
