@@ -8,7 +8,7 @@ from app.db.models.user_model import User
 from app.dependencies.auth_dependencies import current_active_user
 from app.dependencies.db import get_db_session
 from app.errors import DomainError
-from app.services.error_logger.service import Logger
+from app.services.logger.service import Logger
 from app.services.user.service import UserService
 from app.web.api.user.schemas import GetMeResponse, UpdatePasswordPayloadSchema
 
@@ -37,7 +37,7 @@ async def get_me(
 
 @router.patch(
     "/users/me/password",
-    tags=["user"],
+    tags=["users"],
     summary="User: Patch Password",
     name="user:patch_password",
 )

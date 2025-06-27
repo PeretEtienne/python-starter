@@ -12,7 +12,7 @@ from app.db.dao.user_dao import UserCreate
 from app.db.models.user_model import User
 from app.dependencies.auth_dependencies import auth_backend_refresh, can, fastapi_users
 from app.dependencies.db import get_user_db
-from app.services.error_logger.service import Logger
+from app.services.logger.service import Logger
 from app.settings import settings
 from app.web.api.user.schemas import RefreshPayload, UserRead
 
