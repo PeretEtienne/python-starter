@@ -1,6 +1,6 @@
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from app.consts import EventLogType
 from app.db.dao.abstract_dao import AbstractDAO
@@ -12,9 +12,16 @@ class EventLogCreate(BaseModel):
     details: dict[str, Any]
     created_by: int
 
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+
 
 class EventLogUpdate(BaseModel):
-    pass
+
+    model_config = ConfigDict(
+        extra="ignore",
+    )
 
 
 class EventLogDAO(AbstractDAO[EventLog, EventLogCreate, EventLogUpdate]):

@@ -1,7 +1,7 @@
 from typing import Any, Optional, cast
 
 from argon2 import PasswordHasher
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 from sqlalchemy import Column, select
 from sqlalchemy.exc import NoResultFound
 
@@ -57,6 +57,14 @@ class UserCreate(BaseModel):
     def validate_password(cls, value: str) -> str:
         return validate_password(value)
 
+    model_config = ConfigDict(
+        extra="ignore",
+    )
+
 
 class UserUpdatePassword(BaseModel):
     hashed_password: str
+
+    model_config = ConfigDict(
+        extra="ignore",
+    )

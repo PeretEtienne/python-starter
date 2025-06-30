@@ -9,10 +9,9 @@ from sqlalchemy.sql.sqltypes import DateTime, String
 from app.consts import Permission
 from app.db.base import Base
 from app.db.models.abstract_model import AbstractModel
-from app.db.models.timestamp_mixin import TimestampMixin
 
 
-class User(Base, SQLAlchemyBaseUserTable[int], AbstractModel, TimestampMixin):
+class User(Base, SQLAlchemyBaseUserTable[int], AbstractModel):
 
     first_name: Mapped[str] = mapped_column(String(length=255), nullable=False)
     last_name: Mapped[str] = mapped_column(String(length=255), nullable=False)
