@@ -1,4 +1,3 @@
-
 from sqlalchemy import ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql.sqltypes import String
@@ -21,4 +20,3 @@ class Post(Base, AbstractModel):
         index=True,
     )
     author = relationship("User", foreign_keys=[author_id], lazy="selectin")
-

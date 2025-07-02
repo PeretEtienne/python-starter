@@ -34,3 +34,7 @@ class ChangePasswordError(StrEnum):
 
     INVALID_OLD_PASSWORD = "INVALID_OLD_PASSWORD"
     INVALID_NEW_PASSWORD = "INVALID_NEW_PASSWORD"
+
+
+class CreatePostError(StrEnum):
+    INVALID_DATA = "INVALID_DATA"

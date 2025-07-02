@@ -104,4 +104,3 @@ def test_logger_methods_with_custom_params(
             stack_info=custom_stack_info,
             stacklevel=custom_stacklevel,
         )
-

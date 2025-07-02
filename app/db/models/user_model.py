@@ -22,8 +22,9 @@ class User(Base, SQLAlchemyBaseUserTable[int], AbstractModel):
     )
     refresh_token: Mapped[str] = mapped_column(String(length=1024), nullable=True)
     last_login: Mapped[Optional[datetime]] = mapped_column(DateTime())
-    etrf = relationship(
+    posts = relationship(
         "Post",
         back_populates="author",
         lazy="selectin",
+        foreign_keys="Post.author_id",
     )
