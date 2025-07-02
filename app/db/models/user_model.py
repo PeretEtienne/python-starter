@@ -3,7 +3,7 @@ from typing import Optional
 
 from fastapi_users.db import SQLAlchemyBaseUserTable
 from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql.sqltypes import DateTime, String
 
 from app.consts import Permission
@@ -22,3 +22,8 @@ class User(Base, SQLAlchemyBaseUserTable[int], AbstractModel):
     )
     refresh_token: Mapped[str] = mapped_column(String(length=1024), nullable=True)
     last_login: Mapped[Optional[datetime]] = mapped_column(DateTime())
+    etrf = relationship(
+        "Post",
+        back_populates="author",
+        lazy="selectin",
+    )
