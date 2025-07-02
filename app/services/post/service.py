@@ -26,6 +26,14 @@ class PostService:
                 },
             ) from e
 
+        if validated_data.author_id % 2 == 1:
+            raise DomainError(
+                detail={
+                    "code": CreatePostError.INVALID_AUTHOR_ID,
+                    "message": "Author ID must be even.",
+                },
+            )
+
         post_id = await self.post_dao.create(
             DAOPostCreateDTO(
                 title=validated_data.title,

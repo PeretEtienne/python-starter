@@ -38,3 +38,4 @@ class ChangePasswordError(StrEnum):
 
 class CreatePostError(StrEnum):
     INVALID_DATA = "INVALID_DATA"
+    INVALID_AUTHOR_ID = "INVALID_AUTHOR_ID"

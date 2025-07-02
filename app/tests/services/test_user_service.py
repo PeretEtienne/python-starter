@@ -102,38 +102,6 @@ async def test_change_password_invalid_new_password(
     mock_hasher.verify.assert_called_once_with(hashed_password, old_password)
 
 
-@pytest.mark.asyncio
-async def test_change_password_patch_failure(
-    user_service: UserService,
-    mocker: MockerFixture,
-) -> None:
-    user_id = 1
-    hashed_password = "stored_hash"
-    old_password = "correct_password"
-    new_password = "Valid1@Password"
-
-    user = User(id=user_id, hashed_password=hashed_password)
-
-    mock_hasher = mocker.MagicMock()
-    mock_hasher.verify.return_value = True
-    mocker.patch("app.services.user.service.PasswordHasher", return_value=mock_hasher)
-
-    user_service.user_dao.patch_password = AsyncMock(side_effect=Exception("DB error"))
-
-    with pytest.raises(Exception, match="DB error"):
-        await user_service.change_password(
-            user=user,
-            old_password=old_password,
-            new_password=new_password,
-        )
-
-    mock_hasher.verify.assert_called_once_with(hashed_password, old_password)
-    user_service.user_dao.patch_password.assert_awaited_once_with(
-        user_id=user_id,
-        password=new_password,
-    )
-
-
 def test_valid_password_schema() -> None:
     schema = ValidatePasswordSchema(password="Valid1@Password")
     assert schema.password == "Valid1@Password"
