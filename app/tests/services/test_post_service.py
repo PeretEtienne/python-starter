@@ -1,3 +1,6 @@
+from typing import cast
+from unittest.mock import AsyncMock
+
 import pytest
 from pytest_mock import MockerFixture
 
@@ -19,7 +22,7 @@ async def test_create_post_success(
     mocker: MockerFixture,
 ) -> None:
     expected_post_id = 123
-    post_service.post_dao.create = mocker.AsyncMock(return_value=expected_post_id)
+    post_service.post_dao.create = cast(AsyncMock, mocker.AsyncMock(return_value=expected_post_id))
 
     data = PostCreateDTO(
         title="A valid title",

@@ -37,7 +37,7 @@ jobs:
       - name: Run ruff (Linter)
         run: poetry run ruff check .
 
-      - name: Run Pyright (Type Checker)
+      - name: Run Mypy (Type Checker)
         run: poetry run mypy .
 
       - name: Run pytest with coverage (100% for app/services)
