@@ -1,4 +1,3 @@
-from typing import Optional
 from unittest.mock import patch
 
 import pytest
@@ -25,35 +24,28 @@ def default_stacklevel() -> int:
 @pytest.mark.parametrize(
     "log_method, level_enum",
     [
-        ("log", None),  # méthode log() avec level explicite
+        ("log", LogLevel.DEBUG),
         ("info", LogLevel.INFO),
         ("warning", LogLevel.WARNING),
         ("error", LogLevel.ERROR),
     ],
 )
-def test_logger_methods_call_logger_log(
+def test_logger_methods_call_standard_logger(
     log_method: str,
-    level_enum: Optional[LogLevel],
+    level_enum: LogLevel,
     default_exc_info: bool,
     default_stack_info: bool,
     default_stacklevel: int,
 ) -> None:
-    msg: str = "Test log message"
-    exc_info: bool = default_exc_info
-    stack_info: bool = default_stack_info
-    stacklevel: int = default_stacklevel
+    msg = "Test log message"
+    exc_info = default_exc_info
+    stack_info = default_stack_info
+    stacklevel = default_stacklevel
 
-    with patch("app.services.logger.service.Logger") as mock_logger:
+    with patch("app.services.logger.service.logger.log") as mock_std_logger:
         if log_method == "log":
             Logger.log(
-                level=LogLevel.DEBUG,
-                msg=msg,
-                exc_info=exc_info,
-                stack_info=stack_info,
-                stacklevel=stacklevel,
-            )
-            mock_logger.log.assert_called_once_with(
-                level=LogLevel.DEBUG,
+                level=level_enum,
                 msg=msg,
                 exc_info=exc_info,
                 stack_info=stack_info,
@@ -67,13 +59,14 @@ def test_logger_methods_call_logger_log(
                 stack_info=stack_info,
                 stacklevel=stacklevel,
             )
-            mock_logger.log.assert_called_once_with(
-                level=level_enum,
-                msg=msg,
-                exc_info=exc_info,
-                stack_info=stack_info,
-                stacklevel=stacklevel,
-            )
+
+        mock_std_logger.assert_called_once_with(
+            level=level_enum.value,
+            msg=msg,
+            exc_info=exc_info,
+            stack_info=stack_info,
+            stacklevel=stacklevel,
+        )
 
 
 @pytest.mark.parametrize(
@@ -83,22 +76,23 @@ def test_logger_methods_call_logger_log(
         (False, False, 2),
     ],
 )
-def test_logger_methods_with_custom_params(
+def test_logger_with_custom_params_calls_standard_logger(
     custom_exc_info: bool,
     custom_stack_info: bool,
     custom_stacklevel: int,
 ) -> None:
-    msg: str = "Custom params test"
+    msg = "Custom params test"
 
-    with patch("app.services.logger.service.Logger") as mock_logger:
+    with patch("app.services.logger.service.logger.log") as mock_std_logger:
         Logger.info(
             msg=msg,
             exc_info=custom_exc_info,
             stack_info=custom_stack_info,
             stacklevel=custom_stacklevel,
         )
-        mock_logger.log.assert_called_once_with(
-            level=LogLevel.INFO,
+
+        mock_std_logger.assert_called_once_with(
+            level=LogLevel.INFO.value,
             msg=msg,
             exc_info=custom_exc_info,
             stack_info=custom_stack_info,

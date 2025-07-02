@@ -90,6 +90,7 @@ lint.ignore = [
   "PLR0913", # Too many arguments for function call
   "D106",    # Missing docstring in public nested class
   "SIM108",  # Prefer using ternary operator instead of if-else
+  "RET504",  # Unnecessary assignment before return
 ]
 exclude = [".venv/", "app/db/migrations/versions/"]
 lint.mccabe = { max-complexity = 10 }

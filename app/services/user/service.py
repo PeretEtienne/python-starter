@@ -37,6 +37,7 @@ class UserService:
                     "message": "New password does not meet the requirements.",
                 },
             ) from e
+
         await self.user_dao.patch_password(
             user_id=user.id,
             password=schema.password,

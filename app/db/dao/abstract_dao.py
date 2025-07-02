@@ -1,7 +1,8 @@
 import logging
-from typing import Generic, Sequence, Type, TypeVar
+from dataclasses import Field as DCField
+from dataclasses import asdict
+from typing import Any, ClassVar, Generic, Protocol, Sequence, Type, TypeVar
 
-from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,9 +11,22 @@ from app.settings import settings
 
 logger = logging.getLogger(settings.logger_name)
 
+
+class DataclassInstanceCreate(Protocol):
+    __dataclass_fields__: ClassVar[dict[str, DCField[Any]]]
+
+    created_by: int
+
+
+class DataclassInstanceUpdate(Protocol):
+    __dataclass_fields__: ClassVar[dict[str, DCField[Any]]]
+
+    updated_by: int
+
+
 TModel = TypeVar("TModel", bound=AbstractModel)
-TCreate = TypeVar("TCreate", bound=BaseModel)
-TUpdate = TypeVar("TUpdate", bound=BaseModel)
+TCreate = TypeVar("TCreate", bound=DataclassInstanceCreate)
+TUpdate = TypeVar("TUpdate", bound=DataclassInstanceUpdate)
 
 
 class AbstractDAO(Generic[TModel, TCreate, TUpdate]):
@@ -23,7 +37,7 @@ class AbstractDAO(Generic[TModel, TCreate, TUpdate]):
         self.session = session
 
     async def create(self, data: TCreate) -> int:
-        model = self.model(**data.model_dump())
+        model = self.model(**asdict(data))
         self.session.add(model)
         await self.session.flush()
         await self.session.refresh(model)
@@ -31,6 +45,7 @@ class AbstractDAO(Generic[TModel, TCreate, TUpdate]):
 
     async def get_all(
         self,
+        *,
         limit: int = 10,
         offset: int = 0,
     ) -> Sequence[TModel]:
@@ -51,7 +66,7 @@ class AbstractDAO(Generic[TModel, TCreate, TUpdate]):
         rows = await self.session.execute(query)
         return rows.scalars().first()
 
-    async def update(self, key: int, user_id: int, updates: TUpdate) -> None:
+    async def update(self, *, key: int, updates: TUpdate) -> None:
         query = select(self.model).where(self.model.id == key)
         row = await self.session.execute(query)
         model = row.scalars().first()
@@ -59,11 +74,10 @@ class AbstractDAO(Generic[TModel, TCreate, TUpdate]):
         if not model:
             raise ValueError("Model not found")
 
-        for attr, value in updates.model_dump().items():
+        for attr, value in asdict(updates).items():
             setattr(model, attr, value)
 
         model.updated_at = func.now()
-        model.updated_by = user_id
 
         await self.session.flush()
         await self.session.refresh(model)
@@ -78,7 +92,7 @@ class AbstractDAO(Generic[TModel, TCreate, TUpdate]):
 
         await self.session.delete(already_dead)
 
-    async def archive(self, key: int, user_id: int) -> None:
+    async def archive(self, key: int, updated_by: int) -> None:
 
         query = select(self.model).where(self.model.id == key)
         row = await self.session.execute(query)
@@ -92,12 +106,12 @@ class AbstractDAO(Generic[TModel, TCreate, TUpdate]):
 
         model.is_active = False
         model.updated_at = func.now()
-        model.updated_by = user_id
+        model.updated_by = updated_by
 
         await self.session.flush()
         await self.session.refresh(model)
 
-    async def restore(self, key: int, user_id: int) -> None:
+    async def restore(self, key: int, updated_by: int) -> None:
         if not hasattr(self.model, "id"):
             raise NotImplementedError("Model has no id field")
 
@@ -113,7 +127,7 @@ class AbstractDAO(Generic[TModel, TCreate, TUpdate]):
 
         model.is_active = True
         model.updated_at = func.now()
-        model.updated_by = user_id
+        model.updated_by = updated_by
 
         await self.session.flush()
         await self.session.refresh(model)

@@ -1,14 +1,12 @@
-from typing import Any, Optional, cast
+from dataclasses import dataclass
+from typing import Optional, cast
 
 from argon2 import PasswordHasher
-from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 from sqlalchemy import Column, select
 from sqlalchemy.exc import NoResultFound
 
-from app.consts import Permission
 from app.db.dao.abstract_dao import AbstractDAO
 from app.db.models.user_model import User
-from app.services.user.schemas import validate_password
 
 
 class UserDAO(AbstractDAO[User, "UserCreate", "UserUpdatePassword"]):
@@ -28,43 +26,20 @@ class UserDAO(AbstractDAO[User, "UserCreate", "UserUpdatePassword"]):
         hashed_password = PasswordHasher().hash(password)
 
         await self.update(
-            user_id,
-            UserUpdatePassword(
+            key=user_id,
+            updates=UserUpdatePassword(
                 hashed_password=hashed_password,
+                updated_by=user_id,  # Assuming the user is updating their own password
             ),
         )
 
 
-class UserCreate(BaseModel):
-    def create_update_dict(self) -> dict[str, Any]:
-        return self.model_dump(
-            exclude_unset=True,
-            exclude={
-                "id",
-                "is_active",
-                "is_verified",
-            },
-        )
-
-    first_name: str
-    last_name: str
-    email: EmailStr
-    password: str
-    permissions: list[Permission] = []
-
-    @field_validator("password")
-    @classmethod
-    def validate_password(cls, value: str) -> str:
-        return validate_password(value)
-
-    model_config = ConfigDict(
-        extra="ignore",
-    )
+@dataclass
+class UserCreate:  # Handled by fastapi_users
+    created_by: int
 
 
-class UserUpdatePassword(BaseModel):
+@dataclass
+class UserUpdatePassword:
     hashed_password: str
-
-    model_config = ConfigDict(
-        extra="ignore",
-    )
+    updated_by: int
