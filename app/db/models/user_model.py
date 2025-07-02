@@ -9,6 +9,7 @@ from sqlalchemy.sql.sqltypes import DateTime, String
 from app.consts import Permission
 from app.db.base import Base
 from app.db.models.abstract_model import AbstractModel
+from app.db.models.post_model import Post
 
 
 class User(Base, SQLAlchemyBaseUserTable[int], AbstractModel):
@@ -26,5 +27,5 @@ class User(Base, SQLAlchemyBaseUserTable[int], AbstractModel):
         "Post",
         back_populates="author",
         lazy="selectin",
-        foreign_keys="Post.author_id",
+        foreign_keys=Post.author_id,
     )
