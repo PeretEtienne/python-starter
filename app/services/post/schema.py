@@ -16,4 +16,12 @@ class CreatePostValidation(BaseModel):
 
         return value
 
+    @field_validator("author_id")
+    @classmethod
+    def validate_author_id(cls, value: int) -> int:
+        if value % 2 != 0:
+            raise ValueError("Author ID must be even")
+
+        return value
+
     model_config = ConfigDict(from_attributes=True)

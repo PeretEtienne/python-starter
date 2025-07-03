@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.dao.post_dao import PostDAO
+from app.db.dao.user_dao import UserDAO
 from app.db.models.user_model import User
 from app.dependencies.auth_dependencies import current_active_user
 from app.dependencies.db import get_db_session
@@ -14,9 +15,12 @@ from app.web.api.post.schemas import CreatePostPayloadSchema, CreatePostResponse
 router = APIRouter()
 
 
-def get_post_service(db_session: AsyncSession = Depends(get_db_session)) -> PostService:
-    dao = PostDAO(session=db_session)
-    return PostService(post_dao=dao)
+def get_post_service(
+    db_session: AsyncSession = Depends(get_db_session),
+) -> PostService:
+    post_dao = PostDAO(session=db_session)
+    user_dao = UserDAO(session=db_session)
+    return PostService(post_dao=post_dao, user_dao=user_dao)
 
 
 @router.post(
