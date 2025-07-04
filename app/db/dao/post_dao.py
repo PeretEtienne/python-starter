@@ -9,18 +9,6 @@ class PostDAO(
 ):
     model = Post
 
-    async def create(self, data: "DAOPostCreateDTO") -> int:
-        return await super().create(data)
-
-    async def update(
-        self,
-        *,
-        key: int,
-        updates: "DAOPostUpdateDTO | DAOPublishedUpdateDTO",
-    ) -> None:
-        return await super().update(key=key, updates=updates)
-
-
 @dataclass
 class DAOPostCreateDTO:
     title: str

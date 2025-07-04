@@ -55,4 +55,5 @@ async def create_post(
         Logger.warning(e)
         raise HTTPException(**e.to_http_args()) from e
     except Exception as e:
+        Logger.error(e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from e
