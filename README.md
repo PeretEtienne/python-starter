@@ -1,177 +1,216 @@
-# umbrella_api
+# 🐍 Python Starter
 
-This project was generated using fastapi_template.
+Starter moderne pour les projets backend Python, orienté **FastAPI**, **type safety** et **testabilité**.
 
-## Poetry
+---
 
-This project uses poetry. It's a modern dependency management
-tool.
+## 🔧 À l’intérieur
 
-To run the project use this set of commands:
+### 🧱 SQLAlchemy & Alembic
 
-```bash
-poetry install
-poetry run python -m umbrella_api
+Le client Python Prisma étant archivé, retour aux classiques :
+
+- **SQLAlchemy** (ORM)
+- **Alembic** (migrations)
+
+Utilisation en **mode async**, comme sur les derniers projets. Cela désactive le lazy loading, mais nous avons gagné en compréhension de la lib malgré une documentation tierce difficile.  
+(Pour rappel : en Python, il n’y a pas grand-chose d’autre d’aussi complet.)
+
+---
+
+### 👤 fastapi-users
+
+Librairie de gestion des utilisateurs et de l’authentification.  
+✅ Toujours maintenue  
+⚠️ Certains manques  
+Mais elle simplifie une tâche notoirement compliquée.
+
+---
+
+### 📬 Email Service
+
+Reprise du service d’envoi d’emails utilisé dans Umbrela/Umbrelab, rendu plus flexible selon les cas d’usage.
+
+---
+
+### 🧹 Code Quality (mypy, ruff, black)
+
+Configuration alignée avec nos standards précédents, avec :
+
+- Typage strict (`mypy`)
+- Linting rapide (`ruff`)
+- Formatage propre (`black`)
+
+⚙️ Exemple d’ajustement : plus de docstring obligatoire sur chaque fonction/classe.
+
+---
+
+### 📦 Validateur de Query Params
+
+Lib interne permettant :
+
+- Définition des query params avec **Pydantic**
+- Support de requêtes complexes, ex :
+  ```
+  http://localhost/test?filter[status]=in_progress&filter[center]=1
+  ```
+
+---
+
+### 📑 Logger & EventLog
+
+- **Logger** : service de logs pour le debug.
+- **EventLog** : système de journalisation des événements, utile pour la qualité et l’audit.
+
+---
+
+### 🛠️ Utils
+
+Fonctions utilitaires partagées, disponibles dès le départ.
+
+---
+
+## ✅ (Good?) Practices
+
+### 1. 🧠 Découplage Web ↔ Métier
+
+Objectif : **logique métier indépendante de FastAPI** et **100% testable**.
+
+#### Couche web
+
+- Validation **structurelle uniquement**, via Pydantic
+- Aucune logique métier
+
+```python
+class Register(BaseModel):
+    password: str  # Aucun check métier ici
+)
 ```
 
-This will start the server on the configured host.
+#### Couche métier
 
-You can find swagger documentation at `/api/docs`.
+- Validation des règles métier
+- Logique de traitement
+- 100% testée (`app/services/`)
 
-You can read more about poetry here: https://python-poetry.org/
+#### Couche web : testée uniquement via tests fonctionnels
 
-## Docker
+FastAPI et SQLAlchemy sont considérés comme suffisamment testés.
 
-You can start the project with docker using this command:
+---
 
-```bash
-docker-compose up --build
+### 2. 🛡️ Type Safety
+
+- Utilisation poussée de `TypedDict`, `Generic`, `Literal`…
+- Tous les retours/entrées sont typés
+
+---
+
+### 3. 🧾 DTO vs Schema
+
+| Type     | Description                                                   | Exemple           |
+| -------- | ------------------------------------------------------------- | ----------------- |
+| `Schema` | Validation structurelle (Pydantic)                            | API Payload       |
+| `DTO`    | Transfert de données sans logique ni validation (`dataclass`) | Entre les couches |
+
+---
+
+### 4. 🔐 Constantes
+
+Fichier centralisé pour les enums & constantes → facilite :
+
+- L’introspection
+- Le refacto
+- Le typage
+
+---
+
+### 5. 🧨 DomainError & gestion des erreurs
+
+Dans le fichier `errors.py`, on trouve :
+
+```python
+raise DomainError(ErrorCode.INVALID_TOKEN, "Token is invalid.")
 ```
 
-If you want to develop in docker with autoreload and exposed ports add `-f deploy/docker-compose.dev.yml` to your docker command.
-Like this:
+FastAPI retournera :
 
-```bash
-docker-compose -f docker-compose.yml -f deploy/docker-compose.dev.yml --project-directory . up --build
+```json
+{
+  "code": "INVALID_TOKEN",
+  "message": "Token is invalid."
+}
 ```
 
-This command exposes the web application on port 8000, mounts current directory and enables autoreload.
+- Utilisé dans les services
+- Catché dans la couche web :
 
-But you have to rebuild image every time you modify `poetry.lock` or `pyproject.toml` with this command:
-
-```bash
-docker-compose build
+```python
+try:
+    user_service.reset_password(dto)
+except DomainError as e:
+    raise HTTPException(**e.to_http())
 ```
 
-MakeFile recipes, to launch the previous commands easier:
+---
 
-```bash
-make build
-make run
-make down
+## 🧠 Règles de Syntaxe
+
+### 1. 🚫 Adieu `model_dump()`
+
+```python
+user_dao.update_password(**payload.model_dump())  # ❌ dict[str, Any] : perte de typage
+
+user_dao.update_password(
+  password=payload.password,
+  new_password=payload.new_password
+)  # ✅ Typé, lisible, safe
 ```
 
-## Project structure
+---
 
-```bash
-$ tree "umbrella_api"
-umbrella_api
-├── conftest.py  # Fixtures for all tests.
-├── db  # module contains db configurations
-│   ├── dao  # Data Access Objects. Contains different classes to interact with database.
-│   └── models  # Package contains different models for ORMs.
-├── __main__.py  # Startup script. Starts uvicorn.
-├── services  # Package for different external services such as rabbit or redis etc.
-├── settings.py  # Main configuration settings for project.
-├── static  # Static content.
-├── tests  # Tests for project.
-└── web  # Package contains web server. Handlers, startup config.
-    ├── api  # Package with all handlers.
-    │   └── router.py  # Main router.
-    ├── application.py  # FastAPI application configuration.
-    └── lifespan.py  # Contains actions to perform on startup and shutdown.
+### 2. ✅ Presque uniquement des kwargs
+
+Favorise la lisibilité et évite les erreurs d’ordre d’arguments.
+
+```python
+# ❌ Mauvais :
+my_function("01-01-2023", "15-01-2023", True)
+
+# ✅ Bon :
+my_function(
+  start_date="01-01-2023",
+  end_date="15-01-2023",
+  dry_run=True
+)
 ```
 
-## Configuration
+Utiliser :
 
-This application can be configured with environment variables.
-
-You can create `.env` file in the root directory and place all
-environment variables here.
-
-All environment variables should start with "UMBRELLA*API*" prefix.
-
-For example if you see in your "umbrella_api/settings.py" a variable named like
-`random_parameter`, you should provide the "UMBRELLA_API_RANDOM_PARAMETER"
-variable to configure the value. This behaviour can be changed by overriding `env_prefix` property
-in `umbrella_api.settings.Settings.Config`.
-
-An example of .env file:
-
-```bash
-UMBRELLA_API_RELOAD="True"
-UMBRELLA_API_PORT="8000"
-UMBRELLA_API_ENVIRONMENT="dev"
+```python
+def my_function(*, start_date: str, end_date: str, dry_run: bool):
+    ...
 ```
 
-You can read more about BaseSettings class here: https://pydantic-docs.helpmanual.io/usage/settings/
+---
 
-## Pre-commit
+## 📌 Pour résumer
 
-To install pre-commit simply run inside the shell:
+| Choix                        | Pourquoi                                   |
+| ---------------------------- | ------------------------------------------ |
+| FastAPI + SQLAlchemy (async) | Stables, performants, bien connus          |
+| Code métier découpé          | Plus testable, maintenable                 |
+| Typage strict                | Plus de confiance, moins d'erreurs runtime |
+| Test couverture 100% métier  | Focus là où c'est utile                    |
+| FastAPI-users                | Pragmatisme : ne pas réinventer l’auth     |
+| model_dump() proscrit        | Pour garder le typage                      |
+| Presque que des kwargs       | Plus de lisibilité, moins d'erreurs        |
 
-```bash
-pre-commit install
-```
+---
 
-pre-commit is very useful to check your code before publishing it.
-It's configured using .pre-commit-config.yaml file.
+## 🧪 Envie de contribuer ?
 
-By default it runs:
+Ce starter est pensé pour servir de base solide à tous nos projets.  
+N’hésite pas à proposer des améliorations, PRs ou tickets selon les évolutions des projets ou de FastAPI.
 
-- black (formats your code);
-- mypy (validates types);
-- ruff (spots possible bugs);
-
-You can read more about pre-commit here: https://pre-commit.com/
-
-## Migrations
-
-If you want to migrate your database, you should run following commands:
-
-```bash
-# To run all migrations until the migration with revision_id.
-alembic upgrade "<revision_id>"
-
-# To perform all pending migrations.
-alembic upgrade "head"
-```
-
-### Reverting migrations
-
-If you want to revert migrations, you should run:
-
-```bash
-# revert all migrations up to: revision_id.
-alembic downgrade <revision_id>
-
-# Revert everything.
- alembic downgrade base
-```
-
-### Migration generation
-
-To generate migrations you should run:
-
-```bash
-# For automatic change detection.
-alembic revision --autogenerate
-
-# For empty file generation.
-alembic revision
-```
-
-## Running tests
-
-If you want to run it in docker, simply run:
-
-```bash
-docker-compose run --build --rm api pytest -vv .
-docker-compose down
-```
-
-For running tests on your local machine.
-
-1. you need to start a database.
-
-I prefer doing it with docker:
-
-```
-docker run -p "5432:5432" -e "POSTGRES_PASSWORD=umbrella_api" -e "POSTGRES_USER=umbrella_api" -e "POSTGRES_DB=umbrella_api" postgres:16.3-bullseye
-```
-
-2. Run the pytest.
-
-```bash
-pytest -vv .
-```
+---
