@@ -7,8 +7,9 @@ from pytest_mock import MockerFixture
 
 from app.db.dao.post_dao import DAOPostCreateDTO
 from app.db.models.user_model import User
-from app.errors import CreatePostError, DomainError
+from app.errors import DomainError
 from app.services.post.dto import PostCreateDTO
+from app.services.post.errors import CreatePostError
 from app.services.post.service import PostService
 
 

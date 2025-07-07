@@ -4,7 +4,8 @@ import pytest
 from pytest_mock import MockerFixture
 
 from app.db.models.user_model import User
-from app.errors import ChangePasswordError, DomainError
+from app.errors import DomainError
+from app.services.user.errors import ChangePasswordError
 from app.services.user.schemas import ValidatePasswordSchema
 from app.services.user.service import UserService
 

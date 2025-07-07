@@ -1,4 +1,3 @@
-from enum import StrEnum
 from http import HTTPStatus
 from typing import TypedDict
 
@@ -28,14 +27,3 @@ class DomainError(Exception):
 
     def to_http_args(self) -> HttpExceptionArgs:
         return {"detail": self.detail, "status_code": self.status_code}
-
-
-class ChangePasswordError(StrEnum):
-
-    INVALID_OLD_PASSWORD = "INVALID_OLD_PASSWORD"
-    INVALID_NEW_PASSWORD = "INVALID_NEW_PASSWORD"
-
-
-class CreatePostError(StrEnum):
-    INVALID_DATA = "INVALID_DATA"
-    AUTHOR_NOT_FOUND = "AUTHOR_NOT_FOUND"
