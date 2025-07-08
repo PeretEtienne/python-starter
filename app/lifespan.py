@@ -4,7 +4,10 @@ from typing import AsyncGenerator
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+from app.db.session_manager import session_manager
+from app.services.hybrid_event_bus.service import event_bus
 from app.settings import settings
+from app.setup_events import register_event_handlers
 
 
 def _setup_db(app: FastAPI) -> None:  # pragma: no cover
@@ -22,6 +25,7 @@ def _setup_db(app: FastAPI) -> None:  # pragma: no cover
         engine,
         expire_on_commit=False,
     )
+    session_manager.init(session_factory)
     app.state.db_engine = engine
     app.state.db_session_factory = session_factory
 
@@ -43,6 +47,7 @@ async def lifespan_setup(
     app.middleware_stack = None
     _setup_db(app)
     app.middleware_stack = app.build_middleware_stack()
+    register_event_handlers(event_bus)
 
     yield
     await app.state.db_engine.dispose()

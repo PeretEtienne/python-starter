@@ -3,8 +3,10 @@ from pydantic import ValidationError
 from app.db.dao.post_dao import DAOPostCreateDTO, PostDAO
 from app.db.dao.user_dao import UserDAO
 from app.errors import DomainError
+from app.services.hybrid_event_bus.service import event_bus
 from app.services.post.dto import PostCreateDTO
 from app.services.post.errors import CreatePostError
+from app.services.post.events import PostCreatedEvent
 from app.services.post.schema import CreatePostValidation
 
 
@@ -49,6 +51,13 @@ class PostService:
                 author_id=validated_data.author_id,
                 created_by=validated_data.created_by,
             ),
+        )
+
+        await event_bus.publish(event=PostCreatedEvent(
+            id=post_id,
+            title=validated_data.title,
+            published=validated_data.published,
+            author_id=validated_data.author_id),
         )
 
         return post_id

@@ -38,16 +38,13 @@ class Logger:
     @staticmethod
     def info(
         msg: object,
-        exc_info: bool = settings.exc_info,
-        stack_info: bool = settings.stack_info,
-        stacklevel: int = settings.stacklevel,
     ) -> None:
         Logger.log(
             level=LogLevel.INFO,
             msg=msg,
-            exc_info=exc_info,
-            stack_info=stack_info,
-            stacklevel=stacklevel,
+            exc_info=False,
+            stack_info=False,
+            stacklevel=False,
         )
 
     @staticmethod
