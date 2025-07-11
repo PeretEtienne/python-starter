@@ -1,7 +1,7 @@
 from argon2 import PasswordHasher
 from pydantic import ValidationError
 
-from app.db.dao.user_dao import UserDAO
+from app.db.dao.user_dao import UserDAOProtocol
 from app.db.models.user_model import User
 from app.errors import DomainError
 from app.services.user.errors import ChangePasswordError
@@ -9,7 +9,7 @@ from app.services.user.schemas import ValidatePasswordSchema
 
 
 class UserService:
-    def __init__(self, *, user_dao: UserDAO) -> None:
+    def __init__(self, *, user_dao: UserDAOProtocol) -> None:
         self.user_dao = user_dao
 
     async def change_password(

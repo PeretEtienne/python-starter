@@ -1,8 +1,15 @@
 from dataclasses import dataclass
+from typing import Protocol
 
-from app.db.dao.abstract_dao import AbstractDAO
+from app.db.dao.abstract_dao import AbstractDAO, DAOProtocol
 from app.db.models.post_model import Post
 
+
+class PostDAOProtocol(
+    DAOProtocol[Post, "DAOPostCreateDTO", "DAOPostUpdateDTO | DAOPublishedUpdateDTO"],
+    Protocol,
+):
+    ...
 
 class PostDAO(
     AbstractDAO[Post, "DAOPostCreateDTO", "DAOPostUpdateDTO | DAOPublishedUpdateDTO"],

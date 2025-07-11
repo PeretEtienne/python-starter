@@ -1,7 +1,7 @@
 from pydantic import ValidationError
 
-from app.db.dao.post_dao import DAOPostCreateDTO, PostDAO
-from app.db.dao.user_dao import UserDAO
+from app.db.dao.post_dao import DAOPostCreateDTO, PostDAOProtocol
+from app.db.dao.user_dao import UserDAOProtocol
 from app.errors import DomainError
 from app.services.post.dto import PostCreateDTO
 from app.services.post.errors import CreatePostError
@@ -9,7 +9,7 @@ from app.services.post.schema import CreatePostValidation
 
 
 class PostService:
-    def __init__(self, *, post_dao: PostDAO, user_dao: UserDAO) -> None:
+    def __init__(self, *, post_dao: PostDAOProtocol, user_dao: UserDAOProtocol) -> None:
         self.post_dao = post_dao
         self.user_dao = user_dao
 

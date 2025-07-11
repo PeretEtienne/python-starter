@@ -24,19 +24,27 @@ class DataclassInstanceUpdate(Protocol):
     updated_by: int
 
 
-TModel = TypeVar("TModel", bound=AbstractModel)
-TCreate = TypeVar("TCreate", bound=DataclassInstanceCreate)
-TUpdate = TypeVar("TUpdate", bound=DataclassInstanceUpdate)
+TModel_co = TypeVar("TModel_co", bound=AbstractModel, covariant=True)
+TCreate_contra = TypeVar("TCreate_contra", bound=DataclassInstanceCreate, contravariant=True)
+TUpdate_contra = TypeVar("TUpdate_contra", bound=DataclassInstanceUpdate, contravariant=True)
 
+class DAOProtocol(Protocol[TModel_co, TCreate_contra, TUpdate_contra]):
+    async def create(self, data: TCreate_contra) -> int: ...
+    async def get_all(self, *, limit: int = 10, offset: int = 0) -> Sequence[TModel_co]: ...
+    async def get_by_id(self, key: int) -> TModel_co | None: ...
+    async def update(self, *, key: int, updates: TUpdate_contra) -> None: ...
+    async def delete(self, key: int) -> None: ...
+    async def archive(self, key: int, updated_by: int) -> None: ...
+    async def restore(self, key: int, updated_by: int) -> None: ...
 
-class AbstractDAO(Generic[TModel, TCreate, TUpdate]):
+class AbstractDAO(Generic[TModel_co, TCreate_contra, TUpdate_contra]):
     session: AsyncSession
-    model: Type[TModel]
+    model: Type[TModel_co]
 
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def create(self, data: TCreate) -> int:
+    async def create(self, data: TCreate_contra) -> int:
         model = self.model(**asdict(data))
         self.session.add(model)
         await self.session.flush()
@@ -48,7 +56,7 @@ class AbstractDAO(Generic[TModel, TCreate, TUpdate]):
         *,
         limit: int = 10,
         offset: int = 0,
-    ) -> Sequence[TModel]:
+    ) -> Sequence[TModel_co]:
         query = select(self.model).where(self.model.is_active.is_(True)).offset(offset)
 
         if limit > 0:
@@ -58,7 +66,7 @@ class AbstractDAO(Generic[TModel, TCreate, TUpdate]):
 
         return raw_models.scalars().fetchall()
 
-    async def get_by_id(self, key: int) -> TModel | None:
+    async def get_by_id(self, key: int) -> TModel_co | None:
         query = select(self.model).where(
             self.model.id == key and self.model.is_active.is_(True),
         )
@@ -66,7 +74,7 @@ class AbstractDAO(Generic[TModel, TCreate, TUpdate]):
         rows = await self.session.execute(query)
         return rows.scalars().first()
 
-    async def update(self, *, key: int, updates: TUpdate) -> None:
+    async def update(self, *, key: int, updates: TUpdate_contra) -> None:
         query = select(self.model).where(self.model.id == key)
         row = await self.session.execute(query)
         model = row.scalars().first()

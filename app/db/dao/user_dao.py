@@ -1,13 +1,21 @@
 from dataclasses import dataclass
-from typing import Optional, cast
+from typing import Optional, Protocol, cast
 
 from argon2 import PasswordHasher
 from sqlalchemy import Column, select
 from sqlalchemy.exc import NoResultFound
 
-from app.db.dao.abstract_dao import AbstractDAO
+from app.db.dao.abstract_dao import AbstractDAO, DAOProtocol
 from app.db.models.user_model import User
 
+
+class UserDAOProtocol(
+    DAOProtocol[
+        User, "UserCreate", "UserUpdatePassword",
+    ], Protocol,
+):
+    async def get_by_email(self, email: str) -> Optional[User]: ...
+    async def patch_password(self, user_id: int, password: str) -> None: ...
 
 class UserDAO(AbstractDAO[User, "UserCreate", "UserUpdatePassword"]):
     model = User
